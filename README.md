@@ -4,8 +4,7 @@ Generate a Helm release and cluster configuration file that is convenient for co
 
 ## TODO
 
-- [ ] 实现基础对比功能
-- [ ] `忽略字段` 可配置
+- [ ] 实现初版基础对比功能
 - [ ] 接入 Helm 插件机制
 - [ ] 中文文档
 - [ ] 英文文档

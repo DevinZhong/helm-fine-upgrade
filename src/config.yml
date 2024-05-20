@@ -1,0 +1,168 @@
+ignore_fields:
+  _fields:
+    - status
+    - secrets
+  metadata:
+    _fields:
+      - resourceVersion
+      - uid
+      - creationTimestamp
+      - generation
+      - finalizers
+    annotations:
+      _fields:
+        - deployment.kubernetes.io/revision
+        - meta.helm.sh/release-name
+        - meta.helm.sh/release-namespace
+        - kubectl.kubernetes.io/last-applied-configuration
+        - pv.kubernetes.io/bound-by-controller
+        - pv.kubernetes.io/bind-completed
+        - volume.beta.kubernetes.io/storage-provisioner
+        - volume.kubernetes.io/storage-provisioner
+        - kubernetes.io/elb.eip-id
+        - kubernetes.io/elb.pass-through
+        - kubernetes.io/elb.mark
+        - kubernetes.io/elb.class
+        - kubernetes.io/elb.health-check-flag
+        - kubernetes.io/elb.lb-algorithm
+        - description
+        - currentVersion
+        - originName
+        - k8s.kuboard.cn/pvcType
+        - k8s.kuboard.cn/workload
+    labels:
+      _fields:
+        - app.kubernetes.io/managed-by
+        - k8slens-edit-resource-version
+        - k8s.kuboard.cn/name
+  spec:
+    _fields:
+      - claimRef
+      - persistentVolumeReclaimPolicy
+      - volumeMode
+      - progressDeadlineSeconds
+      - revisionHistoryLimit
+      - volumeName
+      - clusterIP
+      - clusterIPs
+      - internalTrafficPolicy
+      - ipFamilies
+      - ipFamilyPolicy
+      - sessionAffinity
+      - allocateLoadBalancerNodePorts
+      - healthCheckNodePort
+      - loadBalancerIP
+      - externalTrafficPolicy
+      - strategy
+      - replicas
+      - updateStrategy
+      - podManagementPolicy
+      - concurrencyPolicy
+      - failedJobsHistoryLimit
+      - successfulJobsHistoryLimit
+      - suspend
+    strategy:
+      _fields:
+        - rollingUpdate
+    jobTemplate:
+      _fields:
+        - metadata
+      spec:
+        template:
+          _fields:
+            - metadata
+          spec:
+            _fields:
+              - dnsPolicy
+              - schedulerName
+              - securityContext
+              - serviceAccountName
+              - terminationGracePeriodSeconds
+            containers:
+              _fields:
+                - resources
+                - terminationMessagePath
+                - terminationMessagePolicy
+                - imagePullPolicy
+    template:
+      metadata:
+        _fields:
+          - creationTimestamp
+        annotations:
+          _fields:
+            - kubectl.kubernetes.io/restartedAt
+            - redeploy-timestamp
+            - telepresence.getambassador.io/restartedAt
+        labels:
+          _fields:
+            - pod-template-hash
+      spec:
+        _fields:
+          - dnsPolicy
+          - restartPolicy
+          - schedulerName
+          - securityContext
+          - terminationGracePeriodSeconds
+          - serviceAccount
+        containers:
+          _fields:
+            - imagePullPolicy
+            - terminationMessagePath
+            - terminationMessagePolicy
+          livenessProbe:
+            _fields:
+              - failureThreshold
+              - periodSeconds
+              - successThreshold
+              - timeoutSeconds
+            httpGet:
+              _fields:
+                - scheme
+          readinessProbe:
+            _fields:
+              - failureThreshold
+              - periodSeconds
+              - successThreshold
+              - timeoutSeconds
+            httpGet:
+              _fields:
+                - scheme
+          startupProbe:
+            _fields:
+              - failureThreshold
+              - periodSeconds
+              - successThreshold
+              - timeoutSeconds
+            httpGet:
+              _fields:
+                - scheme
+          ports:
+            _fields:
+              - protocol
+          env:
+            valueFrom:
+              fieldRef:
+                _fields:
+                  - apiVersion
+        initContainers:
+          _fields:
+            - resources
+            - terminationMessagePath
+            - terminationMessagePolicy
+            - imagePullPolicy
+        volumes:
+          configMap:
+            _fields:
+              - defaultMode
+          secret:
+            _fields:
+              - defaultMode
+    ports:
+      _fields:
+        - nodePort
+        - protocol
+        - targetPort
+  subsets:
+    ports:
+      _fields:
+        - protocol
