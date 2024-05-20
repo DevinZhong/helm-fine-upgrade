@@ -77,6 +77,11 @@ def diff(chart_path: str,
         remove_ignore_fields(cluster_manifest, config['ignore_fields'])
         cluster_manifests.append(cluster_manifest)
 
+    for cluster_manifest in cluster_original_manifests:
+        manifest_unique_key = get_manifest_unique_key(cluster_manifest)
+        if manifest_unique_key not in manifest_key_set:
+            cluster_manifests.append(cluster_manifest)
+
     os.makedirs(output_path, exist_ok=True)
     with open(os.path.join(output_path, RELEASE_CONTENT_FILENAME), 'w', encoding='utf-8') as outfile:
         yaml.dump_all(release_manifests, outfile, allow_unicode=True)
