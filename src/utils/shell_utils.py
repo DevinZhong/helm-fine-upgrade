@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
+import os
 import subprocess
 
-def run_shell_cmd(shell_cmd, debug, input=None) -> str:
-    if debug:
+
+HELM_DEBUG = os.environ.get('HELM_DEBUG', '0')
+print(f'HELM_DEBUG: {HELM_DEBUG}')
+
+def run_shell_cmd(shell_cmd, input=None) -> str:
+    if HELM_DEBUG:
         print(f'执行命令：{shell_cmd}')
     if input is not None:
         return_cmd = subprocess.run(shell_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', shell=True, input=input, text=True)

@@ -1,0 +1,7 @@
+name: cluster-diff
+version: '0.1.0'
+usage: "helm cluster-diff [ACTION] [NAME] [CHART] [flags]"
+description: |
+  Generate a Helm release and cluster configuration file that is convenient for comparison.
+ignoreFlags: false
+command: "$HELM_PLUGIN_DIR/src/main.py"

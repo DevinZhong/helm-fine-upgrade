@@ -1,45 +1,42 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
+import os
 import yaml
 from utils.shell_utils import run_shell_cmd
+
+HELM_NAMESPACE = os.environ.get('HELM_NAMESPACE')
+print(f'HELM_NAMESPACE: {HELM_NAMESPACE}')
 
 K8S_KINDS = ['PodDisruptionBudget', 'ServiceAccount', 'Secret', 'ConfigMap',
              'PersistentVolume', 'PersistentVolumeClaim', 'Role', 'RoleBinding',
              'Service', 'Deployment', 'HorizontalPodAutoscaler', 'CronJob', 'Endpoints']
 
-def get_api_object_spec(kind, name, namespace, kubeconfig, debug):
+def get_api_object_spec(kind, name, namespace):
     """
     根据元信息，使用 kubectl 获取API对象的 yaml 配置
     """
     cmd = f'kubectl get {kind} {name} -o yaml'
     if namespace is not None:
         cmd += f' -n {namespace}'
-    if kubeconfig is not None:
-        cmd += f' --kubeconfig={kubeconfig}'
-    cmd_output = run_shell_cmd(cmd, debug)
+    cmd_output = run_shell_cmd(cmd)
     if cmd_output is not None:
         return yaml.safe_load(cmd_output)
     else:
         return None
     
-def get_all_release_api_objects(release_name, release_namespace, kubeconfig, debug) -> list:
+def get_all_release_api_objects(release_name) -> list:
     """获取集群中所有由 Helm Release 管理的 API 对象
 
     Args:
         release_name (string): release name
-        release_namespace (string): release namespace
-        kubeconfig (string): kubeconfig path
-        debug (boolean): debug mode flag
 
     Returns:
         list: API 对象配置列表
     """
     kinds = ','.join(K8S_KINDS)
     cmd = f'kubectl get {kinds} --all-namespaces -l app.kubernetes.io/managed-by=Helm -o yaml'
-    if kubeconfig is not None:
-        cmd += f' --kubeconfig {kubeconfig}'
-    cmd_output = run_shell_cmd(cmd, debug)
+    cmd_output = run_shell_cmd(cmd)
     if cmd_output is not None:
         release_runtime_manifests = []
         manifests = yaml.safe_load(cmd_output)['items']
@@ -51,7 +48,7 @@ def get_all_release_api_objects(release_name, release_namespace, kubeconfig, deb
                 continue
             manifest_release_name = annotations['meta.helm.sh/release-name']
             manifest_release_namespace = annotations['meta.helm.sh/release-namespace']
-            if manifest_release_name != release_name or manifest_release_namespace != release_namespace:
+            if manifest_release_name != release_name or manifest_release_namespace != HELM_NAMESPACE:
                 continue
             else:
                 release_runtime_manifests.append(manifest)
