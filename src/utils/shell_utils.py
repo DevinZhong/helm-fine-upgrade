@@ -6,7 +6,6 @@ import subprocess
 
 
 HELM_DEBUG = os.environ.get('HELM_DEBUG', '0')
-print(f'HELM_DEBUG: {HELM_DEBUG}')
 
 def run_shell_cmd(shell_cmd, input=None) -> str:
     if HELM_DEBUG:

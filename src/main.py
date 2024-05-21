@@ -18,6 +18,7 @@ CURRENT_DIRECTORY = os.getcwd()
 
 init_yaml_representer()
 
+DOC_FILE = '../README.md'
 DEFAULT_CONFIG_FILE = './config.yml'
 DEFAULT_OUPUT_DIRNAME = 'helm-cluster-diff'
 CLUSTER_DUMP_FILENAME = 'cluster_manifests.yaml'
@@ -84,7 +85,11 @@ def diff(chart_path: str,
     print(f'生成文件: {os.path.join(output_path, CLUSTER_DUMP_FILENAME)}.')
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    
+    with open(os.path.join(BASEDIR, DOC_FILE), 'r') as doc_file:
+        doc_content = doc_file.read()
+    parser = argparse.ArgumentParser(description=doc_content, formatter_class=argparse.RawTextHelpFormatter)
+
     parser.add_argument('action', type=str, help='执行的操作，目前支持的操作：generate-comparison-file')
     parser.add_argument('release_name', type=str, default='', help='Release Name')
     parser.add_argument('chart', type=str, help='Chart local path or package')

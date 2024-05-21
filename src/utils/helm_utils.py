@@ -6,7 +6,6 @@ import yaml
 from utils.shell_utils import run_shell_cmd
 
 HELM_NAMESPACE = os.environ.get('HELM_NAMESPACE')
-print(f'HELM_NAMESPACE: {HELM_NAMESPACE}')
 
 K8S_KINDS = ['PodDisruptionBudget', 'ServiceAccount', 'Secret', 'ConfigMap',
              'PersistentVolume', 'PersistentVolumeClaim', 'Role', 'RoleBinding',

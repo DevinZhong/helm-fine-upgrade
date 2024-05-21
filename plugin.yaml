@@ -1,7 +1,18 @@
 name: cluster-diff
 version: '0.1.0'
-usage: "helm cluster-diff [ACTION] [NAME] [CHART] [flags]"
+usage: "Tools for comparing manifests between cluster and release, and merging cluster differences to chart."
 description: |
   Generate a Helm release and cluster configuration file that is convenient for comparison.
+
+  Before using this plugin, please install the Python environment first.
+
+  Use the following command to initialize the plugin dependencies:
+
+    cd "$(helm env | grep HELM_PLUGINS | awk -F'"' '{print $2}')/helm-cluster-diff" && pip install -r requirements.txt && cd -
+
+  Execute the following command to view the complete usage instructions:
+
+    helm cluster-diff --help
+
 ignoreFlags: false
 command: "$HELM_PLUGIN_DIR/src/main.py"
