@@ -82,3 +82,16 @@ def manifests_list_to_dict(manifests: list) -> dict:
         dict: 转化后的字典
     """
     return {get_manifest_unique_key(d): d for d in manifests}
+
+def get_image_version(manifest: dict) -> str:
+    """从 manifest 中提取镜像版本号
+
+    Args:
+        manifest (dict): manifest dict
+
+    Returns:
+        str: docker image tag
+    """
+    image = manifest['spec']['template']['spec']['containers'][0]['image']
+    parts = image.split(':')
+    return parts[1]

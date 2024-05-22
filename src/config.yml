@@ -166,3 +166,4 @@ ignore_fields:
     ports:
       _fields:
         - protocol
+image_version_fields:

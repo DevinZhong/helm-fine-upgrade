@@ -40,6 +40,7 @@ helm cluster-diff [ACTION] [NAME] [CHART] [flags]
 
 - `generate-comparison-file`: 生成集群当前配置与 chart 配置的对比文件
 - `show-default-config`: 打印默认插件配置，可以自行重定向保存
+- `update-values-image-version`: 更新 values.yaml 的镜像版本，与集群中的镜像版本进行对齐
 
 ### example
 
