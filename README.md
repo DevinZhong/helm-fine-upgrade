@@ -2,9 +2,35 @@
 
 Generate a Helm release and cluster configuration file that is convenient for comparison.
 
+## Plugin Manager
+
+To install this plugin, simply run Helm command:
+
+```bash
+helm plugin install https://github.com/DevinZhong/helm-cluster-diff
+```
+
+Before use the plugin, run below command to add python dependences:
+
+```bash
+cd "$(helm env | grep HELM_PLUGINS | awk -F'"' '{print $2}')/helm-cluster-diff" && pip install -r requirements.txt && cd -
+```
+
+To uninstall, run:
+
+```bash
+helm plugin uninstall cluster-diff
+```
+
 ## Usage
 
-### basic command struct
+Run this command to view the help document:
+
+```bash
+helm cluster-diff --help
+```
+
+### Plugin Basic Command Structure
 
 ```bash
 helm cluster-diff [ACTION] [NAME] [CHART] [flags]
