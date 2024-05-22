@@ -43,7 +43,7 @@ helm cluster-diff [ACTION] [NAME] [CHART] [flags]
 
 ### example
 
-Generate simplified Release and cluster runtime Manifests files to the default ./helm-cluster-diff directory. (You can then compare them using the vscode editor.)
+Generate simplified Release and cluster runtime Manifests files to the default `./helm-cluster-diff` directory. (You can then compare them using the vscode editor.)
 
 Using the `--debug` flag allows you to view the executed SHELL commands
 
@@ -62,5 +62,8 @@ helm cluster-diff generate-comparison-file \
 - [x] 接入 Helm 插件机制
 - [x] 补充初始化说明
 - [x] 配置文件输出
+- [ ] 同步集群镜像版本到 values.yaml 文件
+- [ ] 接管集群对象到当前 Release
+- [ ] Nacos 配置对比
 - [ ] 中文文档
 - [ ] 英文文档

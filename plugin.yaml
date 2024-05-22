@@ -1,5 +1,5 @@
 name: cluster-diff
-version: '0.1.0'
+version: '0.2.0'
 usage: "Tools for comparing manifests between cluster and release, and merging cluster differences to chart."
 description: |
   Generate a Helm release and cluster configuration file that is convenient for comparison.
