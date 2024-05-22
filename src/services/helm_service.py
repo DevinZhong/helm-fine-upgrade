@@ -72,6 +72,7 @@ def diff(chart_path: str,
     for cluster_manifest in cluster_original_manifests:
         manifest_unique_key = get_manifest_unique_key(cluster_manifest)
         if manifest_unique_key not in manifest_key_set:
+            remove_ignore_fields(cluster_manifest, config['ignore_fields'])
             cluster_manifests.append(cluster_manifest)
 
     os.makedirs(output_path, exist_ok=True)
