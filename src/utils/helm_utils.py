@@ -2,6 +2,7 @@
 #-*- coding:utf-8 -*-
 
 import os
+from typing import Iterable
 import yaml
 from utils.shell_utils import run_shell_cmd
 
@@ -95,3 +96,35 @@ def get_image_version(manifest: dict) -> str:
     image = manifest['spec']['template']['spec']['containers'][0]['image']
     parts = image.split(':')
     return parts[1]
+
+def find_first_same_object_key_with_different_hash(keys: Iterable, object_key: str) -> str:
+    """从 keys 中寻找只是末尾 hash 不同的对象唯一 key，常用语 Helm 中 ConfigMap 的匹配
+
+    Args:
+        keys (Iterable): 可用于遍历的 keys，可以是 list 或 set
+        object_key (str): 寻找匹配的 key
+
+    Returns:
+        str: 匹配到的第一个 key
+    """
+    print(f'keys: {keys}, object_key: {object_key}')
+    for key in keys:
+        # key 长度不同，排除
+        if len(key) != len(object_key):
+            continue
+        # 分隔最后一个 ·-· 符号，符号前为对象基础名称，符号后为 hash
+        key_parts = key.rsplit("-", 1)
+        object_key_parts = object_key.rsplit("-", 1)
+        # 没有 `-`` 符号，排除
+        if len(key_parts) != 2 or len(object_key_parts) != 2:
+            continue 
+        # 对象名部分必须相等，否则跳过
+        if key_parts[0] != object_key_parts[0]:
+            continue
+        print(f"any: {any(c not in '0123456789abcdef' for c in key.lower())}")
+        # hash 部分只能包含16进制数值，否则跳过
+        if any(c not in '0123456789abcdef' for c in key_parts[1].lower()) or any(c not in '0123456789abcdef' for c in object_key_parts[1].lower()):
+            continue
+        # 找到满足的 key
+        return key
+    return None
