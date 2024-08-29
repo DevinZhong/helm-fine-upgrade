@@ -7,6 +7,8 @@ import argparse
 from utils.yaml_utils import init_yaml_representer
 from services.image_service import image_version_diff
 from services.helm_service import diff
+from services.metadata_service import set_ownership_metadata
+from services.pod_label_service import rolling_update_pod_labels
 
 if getattr(sys, 'frozen', False):
     BASEDIR = sys._MEIPASS
@@ -45,15 +47,25 @@ if __name__ == '__main__':
         print_default_config()
     elif args.action == 'generate-comparison-file':
         diff(chart_path=args.chart,
-            release_name=args.release_name,
-            values=args.values,
-            output_path=args.output,
-            config_path=args.config)
-    elif args.action == 'update-values-image-version':
-        image_version_diff(chart_path=args.chart,
              release_name=args.release_name,
              values=args.values,
-             config_path=args.config,
-             dry_run=args.dry_run)
+             output_path=args.output,
+             config_path=args.config)
+    elif args.action == 'update-values-image-version':
+        image_version_diff(chart_path=args.chart,
+                           release_name=args.release_name,
+                           values=args.values,
+                           config_path=args.config,
+                           dry_run=args.dry_run)
+    elif args.action == 'update-ownership-metadata':
+        set_ownership_metadata(chart_path=args.chart,
+                               release_name=args.release_name,
+                               values=args.values,
+                               dry_run=args.dry_run)
+    elif args.action == 'rolling-update-pod-labels':
+        rolling_update_pod_labels(chart_path=args.chart,
+                               release_name=args.release_name,
+                               values=args.values,
+                               dry_run=args.dry_run)
     else:
         print('Not supported action!')

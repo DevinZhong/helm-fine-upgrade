@@ -107,7 +107,7 @@ def find_first_same_object_key_with_different_hash(keys: Iterable, object_key: s
     Returns:
         str: 匹配到的第一个 key
     """
-    print(f'keys: {keys}, object_key: {object_key}')
+    # print(f'keys: {keys}, object_key: {object_key}')
     for key in keys:
         # key 长度不同，排除
         if len(key) != len(object_key):
@@ -121,7 +121,7 @@ def find_first_same_object_key_with_different_hash(keys: Iterable, object_key: s
         # 对象名部分必须相等，否则跳过
         if key_parts[0] != object_key_parts[0]:
             continue
-        print(f"any: {any(c not in '0123456789abcdef' for c in key.lower())}")
+        # print(f"any: {any(c not in '0123456789abcdef' for c in key.lower())}")
         # hash 部分只能包含16进制数值，否则跳过
         if any(c not in '0123456789abcdef' for c in key_parts[1].lower()) or any(c not in '0123456789abcdef' for c in object_key_parts[1].lower()):
             continue
