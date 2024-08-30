@@ -6,15 +6,20 @@ import yaml
 from multiprocessing import Pool
 from utils.shell_utils import run_shell_cmd
 from utils.helm_utils import get_api_object_spec
-from utils.helm_utils import get_api_object_spec, get_all_release_api_objects, manifests_list_to_dict, get_manifest_unique_key
+from utils.helm_utils import get_api_object_spec, get_all_release_api_objects, manifests_list_to_dict, get_manifest_unique_key, is_manifest_match_selector
 from utils.kube_ops_utils import apply_deployment, delete_deployment
 
 APPLY_CMD = 'kubectl apply -f -'
 
-def rolling_update_pod_labels(chart_path, release_name, values, dry_run):
+def rolling_update_pod_labels(chart_path: str,
+                              release_name: str,
+                              values: str,
+                              selector: str,
+                              dry_run: str) -> None:
     """
     滚动更新 Pod 的标签，服务不中断
     """
+
     shell_cmd = f'helm template --is-upgrade --no-hooks --skip-crds {release_name} {chart_path}'
     if values is not None:
         shell_cmd += f' -f {values}'
@@ -46,6 +51,10 @@ def rolling_update_pod_labels(chart_path, release_name, values, dry_run):
     results = []
     print('开始逐一检查Deployment对象的Pod标签配置...')
     for rendered_deployment_manifest in deployments:
+        # 如果与选择器不匹配，直接跳过
+        if not is_manifest_match_selector(rendered_deployment_manifest, selector):
+            continue
+
         name = rendered_deployment_manifest['metadata']['name']
         namespace = rendered_deployment_manifest['metadata']['namespace'] if 'namespace' in rendered_deployment_manifest['metadata'] else None
         manifest_unique_key = get_manifest_unique_key(rendered_deployment_manifest)
@@ -56,9 +65,9 @@ def rolling_update_pod_labels(chart_path, release_name, values, dry_run):
         if cluster_manifest is None:
             continue
 
-        itemMatchLabels = rendered_deployment_manifest['spec']['selector']['matchLabels']
-        specMatchLabels = cluster_manifest['spec']['selector']['matchLabels']
-        if yaml.dump(itemMatchLabels, allow_unicode=True) == yaml.dump(specMatchLabels, allow_unicode=True):
+        renderedMatchLabels = rendered_deployment_manifest['spec']['selector']['matchLabels']
+        clusterMatchLabels = cluster_manifest['spec']['selector']['matchLabels']
+        if yaml.dump(renderedMatchLabels, allow_unicode=True) == yaml.dump(clusterMatchLabels, allow_unicode=True):
             continue
         if dry_run:
             print(f'{namespace}:{name} 需对Pod进行滚动更新.')
@@ -77,12 +86,12 @@ def rolling_update_pod_labels(chart_path, release_name, values, dry_run):
 def rolling_update_worker(rendered_deployment_manifest, cluster_deployment_manifest, service_map, apply_cmd):
     name = rendered_deployment_manifest['metadata']['name']
     namespace = rendered_deployment_manifest['metadata']['namespace'] if 'namespace' in rendered_deployment_manifest['metadata'] else None
-    itemMatchLabels = rendered_deployment_manifest['spec']['selector']['matchLabels']
-    specMatchLabels = cluster_deployment_manifest['spec']['selector']['matchLabels']
+    renderedMatchLabels = rendered_deployment_manifest['spec']['selector']['matchLabels']
+    clusterMatchLabels = cluster_deployment_manifest['spec']['selector']['matchLabels']
     specTemplateLables = cluster_deployment_manifest['spec']['template']['metadata']['labels']
 
     # 1. 创建临时 Deployment 以保持服务不中断
-    specMatchLabels['rolling-update-pod-labels-flag'] = '1'
+    clusterMatchLabels['rolling-update-pod-labels-flag'] = '1'
     specTemplateLables['rolling-update-pod-labels-flag'] = '1'
     temp_name = f'{name}-rolling-temp'
     cluster_deployment_manifest['metadata']['name'] = temp_name
@@ -91,8 +100,8 @@ def rolling_update_worker(rendered_deployment_manifest, cluster_deployment_manif
     delete_deployment(namespace, name)
     # 3. 使用新 Pod 标签创建 Deployment
     cluster_deployment_manifest['metadata']['name'] = name
-    cluster_deployment_manifest['spec']['selector']['matchLabels'] = itemMatchLabels
-    cluster_deployment_manifest['spec']['template']['metadata']['labels'] = itemMatchLabels
+    cluster_deployment_manifest['spec']['selector']['matchLabels'] = renderedMatchLabels
+    cluster_deployment_manifest['spec']['template']['metadata']['labels'] = renderedMatchLabels
     apply_deployment(cluster_deployment_manifest)
     # 4. 新 Deployment 就绪后更新 Service，把流量切回去
     serviceItem = service_map[f'{namespace}:{name}']

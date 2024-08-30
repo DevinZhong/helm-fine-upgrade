@@ -41,6 +41,7 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=str, default=os.path.join(CURRENT_DIRECTORY, DEFAULT_OUPUT_DIRNAME), help='输出比对文件的目录')
     parser.add_argument('--config', type=str, default=os.path.join(BASEDIR, DEFAULT_CONFIG_FILE), help='自定义脚本配置文件路径')
     parser.add_argument('--dry-run', nargs='?', const=True, type=bool, help='仅模拟运行，不实际变更集群，update_ownership 操作可使用')
+    parser.add_argument('--selector', nargs='?', default='', type=str, help='标签选择器，用于过滤 Deployment，控制影响范围')
     args = parser.parse_args()
     
     if args.action == 'show-default-config':
@@ -61,11 +62,13 @@ if __name__ == '__main__':
         set_ownership_metadata(chart_path=args.chart,
                                release_name=args.release_name,
                                values=args.values,
+                               selector=args.selector,
                                dry_run=args.dry_run)
     elif args.action == 'rolling-update-pod-labels':
         rolling_update_pod_labels(chart_path=args.chart,
                                release_name=args.release_name,
                                values=args.values,
+                               selector=args.selector,
                                dry_run=args.dry_run)
     else:
         print('Not supported action!')

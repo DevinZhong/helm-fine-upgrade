@@ -4,14 +4,14 @@
 import os
 import yaml
 from utils.shell_utils import run_shell_cmd
-from utils.helm_utils import get_api_object_spec
-from utils.helm_utils import get_api_object_spec, get_all_release_api_objects, manifests_list_to_dict, get_manifest_unique_key
+from utils.helm_utils import get_api_object_spec, get_all_release_api_objects, manifests_list_to_dict, get_manifest_unique_key, is_manifest_match_selector
 
 HELM_NAMESPACE = os.environ.get('HELM_NAMESPACE')
 
 def set_ownership_metadata(chart_path: str,
                            release_name: str,
-                           values: str, 
+                           values: str,
+                           selector: str, 
                            dry_run: str) -> None:
     """
     设置集群对象的元数据，以支持 helm 修改非 helm 管理的对象
@@ -29,6 +29,10 @@ def set_ownership_metadata(chart_path: str,
     print('开始逐一检查API对象配置...')
     set_metadata_commands = []
     for release_manifest in release_original_manifests:
+        # 如果与选择器不匹配，直接跳过
+        if not is_manifest_match_selector(release_manifest, selector):
+            continue
+
         kind = release_manifest['kind']
         name = release_manifest['metadata']['name']
         namespace = release_manifest['metadata']['namespace'] if 'namespace' in release_manifest['metadata'] else None

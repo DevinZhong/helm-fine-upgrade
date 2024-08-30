@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
+import functools
 from typing import Any
 
 def remove_ignore_fields(obj, ignore_config):
@@ -36,3 +37,26 @@ def set_value(dictionary: dict, keys: str, value: Any):
     for key in keys[:-1]:  # 循环遍历，但不包括最后一个键
         dictionary = dictionary.setdefault(key, {})
     dictionary[keys[-1]] = value
+
+
+@functools.lru_cache(maxsize=None)
+def parse_selector(selector: str) -> dict:
+    """将 selector 参数解析为字典对象
+
+    Args:
+        selector (str): 命令传入的 --selector 参数，为标签选择器
+
+    Returns:
+        dict: 转换后的字典对象
+    """
+    parts = selector.split(',')
+    d = {}
+    for part in parts:
+        key_value = part.split('=')
+        if len(key_value) == 2:
+            key, value = key_value
+            d[key] = value
+        else:
+            raise ValueError('The value for the selector parameter is incorrect.')
+    print(f'selector: {d}')
+    return d

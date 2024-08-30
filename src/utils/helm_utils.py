@@ -5,6 +5,7 @@ import os
 from typing import Iterable
 import yaml
 from utils.shell_utils import run_shell_cmd
+from utils.dict_utils import parse_selector
 
 HELM_NAMESPACE = os.environ.get('HELM_NAMESPACE')
 
@@ -128,3 +129,23 @@ def find_first_same_object_key_with_different_hash(keys: Iterable, object_key: s
         # 找到满足的 key
         return key
     return None
+
+def is_manifest_match_selector(manifest: dict, selector: str) -> bool:
+    if not selector:
+        return True
+    try:
+        selector_dict = parse_selector(selector)
+    except Exception as e:
+        print(e)
+        return False
+
+    if 'metadata' not in manifest:
+        return False
+    if 'labels' not in manifest['metadata']:
+        return False
+    labels=manifest['metadata']['labels']
+
+    for key, value in selector_dict.items():
+        if key not in labels or labels[key] != value:
+            return False
+    return True
