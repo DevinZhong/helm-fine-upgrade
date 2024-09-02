@@ -46,16 +46,21 @@ helm fine-upgrade [ACTION] [NAME] [CHART] [flags]
 
 ### Examples
 
-Generate simplified Release and cluster runtime Manifests files to the default `./helm-fine-upgrade` directory. (You can then compare them using the vscode editor.)
+Generate simplified helm rendered manifests and cluster runtime manifests files to the default `./helm-fine-upgrade` directory. (You can then compare them using the vscode editor.)
 
 Using the `--debug` flag allows you to view the executed SHELL commands
 
 ```bash
+# Execute `generate-comparison-file` action in debug mode in chart root directory.
+# Release name is `my_release` and release namespace is `my_release_namespace`.
+# Specify values in a YAML file `./my-values.yaml`.
+# Specify the plugin configuration file path as `./.my-customized-config.yml`.
 helm fine-upgrade generate-comparison-file \
-    smart100-test . \
-    --namespace smart100-test \
-    --values ./values.yaml \
-    --kubeconfig ~/.kube/smart100-kubeconfig.yaml \
+    my_release . \
+    --namespace my_release_namespace \
+    --values ./my-values.yaml \
+    --config ./.my-customized-config.yml \
+    --kubeconfig ~/.kube/my-kubeconfig.yaml \
     --debug
 ```
 

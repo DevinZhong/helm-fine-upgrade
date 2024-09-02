@@ -1,8 +1,8 @@
 name: fine-upgrade
 version: '0.3.1'
-usage: "Tools for comparing manifests between cluster and release, and merging cluster differences to chart."
+usage: "A way for more controllable upgrading of Helm charts."
 description: |
-  Generate a Helm release and cluster configuration file that is convenient for comparison.
+  A way for more controllable upgrading of Helm charts.
 
   Before using this plugin, please install the Python environment first.
 
