@@ -1,25 +1,25 @@
-# helm-cluster-diff
+# helm-fine-upgrade
 
-Generate a Helm release and cluster configuration file that is convenient for comparison.
+A way for more controllable upgrading of Helm charts.
 
 ## Plugin Manager
 
 To install this plugin, simply run Helm command:
 
 ```bash
-helm plugin install https://github.com/DevinZhong/helm-cluster-diff
+helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
 ```
 
 Before use the plugin, run below command to add python dependences:
 
 ```bash
-cd "$(helm env | grep HELM_PLUGINS | awk -F'"' '{print $2}')/helm-cluster-diff" && pip install -r requirements.txt && cd -
+cd "$(helm env | grep HELM_PLUGINS | awk -F'"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
 ```
 
 To uninstall, run:
 
 ```bash
-helm plugin uninstall cluster-diff
+helm plugin uninstall fine-upgrade
 ```
 
 ## Usage
@@ -27,13 +27,13 @@ helm plugin uninstall cluster-diff
 Run this command to view the help document:
 
 ```bash
-helm cluster-diff --help
+helm fine-upgrade --help
 ```
 
 ### Plugin Basic Command Structure
 
 ```bash
-helm cluster-diff [ACTION] [NAME] [CHART] [flags]
+helm fine-upgrade [ACTION] [NAME] [CHART] [flags]
 ```
 
 ### action
@@ -44,12 +44,12 @@ helm cluster-diff [ACTION] [NAME] [CHART] [flags]
 
 ### example
 
-Generate simplified Release and cluster runtime Manifests files to the default `./helm-cluster-diff` directory. (You can then compare them using the vscode editor.)
+Generate simplified Release and cluster runtime Manifests files to the default `./helm-fine-upgrade` directory. (You can then compare them using the vscode editor.)
 
 Using the `--debug` flag allows you to view the executed SHELL commands
 
 ```bash
-helm cluster-diff generate-comparison-file \
+helm fine-upgrade generate-comparison-file \
     smart100-test . \
     --namespace smart100-test \
     --values ./values.yaml \

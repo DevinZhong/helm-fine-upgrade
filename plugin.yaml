@@ -1,4 +1,4 @@
-name: cluster-diff
+name: fine-upgrade
 version: '0.2.1'
 usage: "Tools for comparing manifests between cluster and release, and merging cluster differences to chart."
 description: |
@@ -8,11 +8,11 @@ description: |
 
   Use the following command to initialize the plugin dependencies:
 
-    cd "$(helm env | grep HELM_PLUGINS | awk -F'"' '{print $2}')/helm-cluster-diff" && pip install -r requirements.txt && cd -
+    cd "$(helm env | grep HELM_PLUGINS | awk -F'"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
 
   Execute the following command to view the complete usage instructions:
 
-    helm cluster-diff --help
+    helm fine-upgrade --help
 
 ignoreFlags: false
 command: "$HELM_PLUGIN_DIR/src/main.py"

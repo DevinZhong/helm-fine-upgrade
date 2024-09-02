@@ -19,7 +19,7 @@ init_yaml_representer()
 
 DOC_FILE = '../README.md'
 DEFAULT_CONFIG_FILE = './config.yml'
-DEFAULT_OUPUT_DIRNAME = 'helm-cluster-diff'
+DEFAULT_OUPUT_DIRNAME = 'helm-fine-upgrade'
 CLUSTER_DUMP_FILENAME = 'cluster_manifests.yaml'
 RELEASE_CONTENT_FILENAME = 'release_manifests.yaml'
 

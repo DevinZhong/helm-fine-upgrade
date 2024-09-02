@@ -20,7 +20,7 @@ init_yaml_representer()
 
 DOC_FILE = '../README.md'
 DEFAULT_CONFIG_FILE = './config.yml'
-DEFAULT_OUPUT_DIRNAME = 'helm-cluster-diff'
+DEFAULT_OUPUT_DIRNAME = 'helm-fine-upgrade'
 
 def print_default_config():
     """打印默认配置文件，类似 helm show values，可以使用重定向另行保存
