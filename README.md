@@ -13,7 +13,7 @@ helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
 Before use the plugin, run below command to add python dependences:
 
 ```bash
-cd "$(helm env | grep HELM_PLUGINS | awk -F'"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
+cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
 ```
 
 To uninstall, run:
@@ -36,13 +36,15 @@ helm fine-upgrade --help
 helm fine-upgrade [ACTION] [NAME] [CHART] [flags]
 ```
 
-### action
+### Plugin Action
 
 - `generate-comparison-file`: 生成集群当前配置与 chart 配置的对比文件
 - `show-default-config`: 打印默认插件配置，可以自行重定向保存
 - `update-values-image-version`: 更新 values.yaml 的镜像版本，与集群中的镜像版本进行对齐
+- `update-ownership-metadata`: 更新 API 对象的元数据信息，使 Helm 可以接管相关对象的更新维护（用于接管其他 chart 或者其他方式创建的对象）
+- `rolling-update-pod-labels`: 滚动更新 pod 的标签。（Deployment 指定 Pod 的标签后，无法更新 Pod 的标签，此动作用于处理此类情况）
 
-### example
+### Examples
 
 Generate simplified Release and cluster runtime Manifests files to the default `./helm-fine-upgrade` directory. (You can then compare them using the vscode editor.)
 
@@ -63,8 +65,21 @@ helm fine-upgrade generate-comparison-file \
 - [x] 接入 Helm 插件机制
 - [x] 补充初始化说明
 - [x] 配置文件输出
-- [ ] 同步集群镜像版本到 values.yaml 文件
-- [ ] 接管集群对象到当前 Release
-- [ ] Nacos 配置对比
+- [x] 同步集群镜像版本到 values.yaml 文件
+- [x] 接管集群对象到当前 Release
+- [ ] ~~Nacos 配置对比~~
 - [ ] 中文文档
 - [ ] 英文文档
+- [x] 实现平滑更新 Pod 标签
+- [ ] 通过选择器过滤对比范围
+- [ ] 通过选择器手动更新对象
+
+## Contributing
+
+- We follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) to submit code.
+- If you have any good ideas or bugs or suggestions, please feel free to submit an issue.
+- Talk is cheap. Welcome to submit your valuable pull request.
+
+## License
+
+[Apache License 2.0](./LICENSE)
