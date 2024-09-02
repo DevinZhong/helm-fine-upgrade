@@ -21,22 +21,22 @@ def set_ownership_metadata(chart_path: str,
         shell_cmd += f' -f {values}'
     print('执行 helm template 命令...')
     cmd_output = run_shell_cmd(shell_cmd)
-    release_original_manifests = yaml.safe_load_all(cmd_output)
+    rendered_original_manifest = yaml.safe_load_all(cmd_output)
     
     cluster_original_manifests = get_all_release_api_objects(release_name)
     cluster_manifest_dict = manifests_list_to_dict(cluster_original_manifests)
 
     print('开始逐一检查API对象配置...')
     set_metadata_commands = []
-    for release_manifest in release_original_manifests:
+    for rendered_manifest in rendered_original_manifest:
         # 如果与选择器不匹配，直接跳过
-        if not is_manifest_match_selector(release_manifest, selector):
+        if not is_manifest_match_selector(rendered_manifest, selector):
             continue
 
-        kind = release_manifest['kind']
-        name = release_manifest['metadata']['name']
-        namespace = release_manifest['metadata']['namespace'] if 'namespace' in release_manifest['metadata'] else None
-        manifest_unique_key = get_manifest_unique_key(release_manifest)
+        kind = rendered_manifest['kind']
+        name = rendered_manifest['metadata']['name']
+        namespace = rendered_manifest['metadata']['namespace'] if 'namespace' in rendered_manifest['metadata'] else None
+        manifest_unique_key = get_manifest_unique_key(rendered_manifest)
         if manifest_unique_key in cluster_manifest_dict:
             continue
         else:

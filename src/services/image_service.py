@@ -38,20 +38,20 @@ def image_version_diff(chart_path: str,
         shell_cmd += f' -f {values}'
     print('执行 helm template 命令...')
     cmd_output = run_shell_cmd(shell_cmd)
-    release_original_manifests = yaml.safe_load_all(cmd_output)
+    rendered_original_manifest = yaml.safe_load_all(cmd_output)
     
     cluster_original_manifests = get_all_release_api_objects(release_name)
     cluster_manifest_dict = manifests_list_to_dict(cluster_original_manifests)
 
     print('开始逐一对比Deployment对象镜像版本...')
     different_image_dict = {}
-    for release_manifest in release_original_manifests:
-        kind = release_manifest['kind']
+    for rendered_manifest in rendered_original_manifest:
+        kind = rendered_manifest['kind']
         if kind != 'Deployment':
             continue
-        name = release_manifest['metadata']['name']
-        namespace = release_manifest['metadata']['namespace'] if 'namespace' in release_manifest['metadata'] else None
-        manifest_unique_key = get_manifest_unique_key(release_manifest)
+        name = rendered_manifest['metadata']['name']
+        namespace = rendered_manifest['metadata']['namespace'] if 'namespace' in rendered_manifest['metadata'] else None
+        manifest_unique_key = get_manifest_unique_key(rendered_manifest)
         if manifest_unique_key in cluster_manifest_dict:
             cluster_manifest = cluster_manifest_dict[manifest_unique_key]
         else:
@@ -59,7 +59,7 @@ def image_version_diff(chart_path: str,
         if cluster_manifest is None:
             continue
 
-        release_version = get_image_version(release_manifest)
+        release_version = get_image_version(rendered_manifest)
         cluster_version = get_image_version(cluster_manifest)
         if release_version == cluster_version:
             continue

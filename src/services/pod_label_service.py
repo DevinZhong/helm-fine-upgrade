@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-import os
 import yaml
 from multiprocessing import Pool
 from utils.shell_utils import run_shell_cmd
@@ -25,11 +24,11 @@ def rolling_update_pod_labels(chart_path: str,
         shell_cmd += f' -f {values}'
     print('执行 helm template 命令...')
     cmd_output = run_shell_cmd(shell_cmd)
-    template = yaml.safe_load_all(cmd_output)
+    rendered_original_manifest = yaml.safe_load_all(cmd_output)
 
     deployments = []
     service_map = {}
-    for rendered_manifest in template:
+    for rendered_manifest in rendered_original_manifest:
         kind = rendered_manifest['kind']
         if kind == 'Deployment':
             deployments.append(rendered_manifest)
