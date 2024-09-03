@@ -49,6 +49,8 @@ def parse_selector(selector: str) -> dict:
     Returns:
         dict: 转换后的字典对象
     """
+    if not selector:
+        return {}
     parts = selector.split(',')
     d = {}
     for part in parts:

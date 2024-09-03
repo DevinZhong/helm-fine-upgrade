@@ -51,7 +51,8 @@ if __name__ == '__main__':
              release_name=args.release_name,
              values=args.values,
              output_path=args.output,
-             config_path=args.config)
+             config_path=args.config,
+             selector=args.selector)
     elif args.action == 'update-values-image-version':
         image_version_diff(chart_path=args.chart,
                            release_name=args.release_name,
