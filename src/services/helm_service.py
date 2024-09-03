@@ -4,8 +4,6 @@
 import sys
 import os
 import yaml
-import itertools
-from typing import List
 from utils.yaml_utils import init_yaml_representer
 from utils.shell_utils import run_shell_cmd
 from utils.dict_utils import remove_ignore_fields, parse_selector
@@ -17,12 +15,7 @@ from utils.helm_utils import (
     find_first_same_object_key_with_different_hash,
     is_manifest_match_selector
     )   
-from utils.manifest_utils import (
-    parse_config_maps_in_deployment,
-    parse_secrets_in_deployment,
-    parse_pvcs_in_deployment,
-    parse_storageclass_in_pvc    
-    )
+from utils.manifest_utils import find_and_merge_related_rendered_manifests_of_deployments
 from utils.kube_ops_utils import apply_manifests
 
 if getattr(sys, 'frozen', False):
@@ -176,84 +169,3 @@ def apply_upgrade(chart_path: str,
         print(yaml.dump_all(selector_rendered_manifests, allow_unicode=True))
     else:
         apply_manifests(selector_rendered_manifests)
-
-def find_and_merge_related_rendered_manifests_of_deployments(deployment_manifests: List[dict],
-                                                             manifest_dict: dict,
-                                                             service_unique_keys: List[str]) -> List[dict]:
-    """找出与 Deployment 关联的其他 manifest 资源
-
-    Args:
-        deployment_manifests (List[dict]): Deployment manifest 数组
-        manifest_dict (dict): 所有 manifest 的字典，key 为 kind:bamespace:name 格式
-        service_unique_keys (List[str]): svc 在字典中的唯一 key 数组
-
-    Returns:
-        List[dict]: 合并后的 manifest 新数组
-    """
-
-    related_namespace_manifests = []
-    related_configmap_manifests = []
-    related_secrets_manifests = []
-    related_pvc_manifests = []
-    related_service_manifests = []
-    related_storageclass_manifests = []
-    unique_key_set = set()
-
-    for rendered_manifest in deployment_manifests:
-        if 'namespace' in rendered_manifest['metadata']:
-            namespace = rendered_manifest['metadata']['namespace']
-        else:
-            namespace = ''
-
-        # 提取 Deployment 关联的 Namespace
-        namespace_unique_key = f'Namespace::{namespace}'
-        if namespace_unique_key in manifest_dict and namespace_unique_key not in unique_key_set:
-            related_namespace_manifests.append(manifest_dict[namespace_unique_key])
-            unique_key_set.add(namespace_unique_key)
-
-        # 提取 Deployment 关联的 PVC
-        for pvc_name in parse_pvcs_in_deployment(rendered_manifest):
-            pvc_unique_key = f'PersistentVolumeClaim:{namespace}:{pvc_name}'
-            if pvc_unique_key in manifest_dict and pvc_unique_key not in unique_key_set:
-                pvc = manifest_dict[pvc_unique_key]
-                related_pvc_manifests.append(pvc)
-                unique_key_set.add(pvc_unique_key)
-                # 提取 PVC 关联的 StorageClass
-                storageclass_name = parse_storageclass_in_pvc(pvc)
-                if storageclass_name is not None:
-                    sc_unique_key = f'StorageClass::{storageclass_name}'
-                    if sc_unique_key in manifest_dict and sc_unique_key not in unique_key_set:
-                        related_storageclass_manifests.append(manifest_dict[sc_unique_key])
-                        unique_key_set.add(sc_unique_key)
-
-        # 提取 Deployment 关联的 Secret
-        for secret_name in parse_secrets_in_deployment(rendered_manifest):
-            secret_unique_key = f'Secret:{namespace}:{secret_name}'
-            if secret_unique_key in manifest_dict and secret_unique_key not in unique_key_set:
-                related_secrets_manifests.append(manifest_dict[secret_unique_key])
-                unique_key_set.add(secret_unique_key)
-        # 提取 Deployment 关联的 ConfigMap
-        for configmap_name in parse_config_maps_in_deployment(rendered_manifest):
-            configmap_unique_key = f'ConfigMap:{namespace}:{configmap_name}'
-            if configmap_unique_key in manifest_dict and configmap_unique_key not in unique_key_set:
-                related_configmap_manifests.append(manifest_dict[configmap_unique_key])
-                unique_key_set.add(configmap_unique_key)
-
-        # 提取 Deployment 关联的 Service
-        pod_labels = rendered_manifest['spec']['template']['metadata']['labels']
-        for svc_key in service_unique_keys:
-            svc = manifest_dict[svc_key]
-            if 'selector' not in svc['spec']:
-                continue
-            svc_selector = svc['spec']['selector']
-            if svc_key not in unique_key_set and all(item in pod_labels.items() for item in svc_selector.items()):
-                related_service_manifests.append(svc)
-                unique_key_set.add(svc_key)
-
-    return list(itertools.chain(related_namespace_manifests,
-                                related_storageclass_manifests,
-                                related_pvc_manifests,
-                                related_secrets_manifests,
-                                related_configmap_manifests,
-                                deployment_manifests,
-                                related_service_manifests))
