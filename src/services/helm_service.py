@@ -23,6 +23,7 @@ from utils.manifest_utils import (
     parse_pvcs_in_deployment,
     parse_storageclass_in_pvc    
     )
+from utils.kube_ops_utils import apply_manifests
 
 if getattr(sys, 'frozen', False):
     BASEDIR = sys._MEIPASS
@@ -53,6 +54,7 @@ def diff(chart_path: str,
         output_path (str): 输出内容目录路径
         config_path (str): 自定义配置文件路径
     """
+
     with open(config_path, 'r', encoding='utf-8') as config_file:
         config = yaml.safe_load(config_file)
 
@@ -132,6 +134,49 @@ def diff(chart_path: str,
         yaml.dump_all(cluster_manifests, outfile, allow_unicode=True)
     print(f'生成文件: {os.path.join(output_path, RUNTIME_MANIFESTS_FILENAME)}.')
 
+def apply_upgrade(chart_path: str,
+         release_name: str,
+         values: str,
+         selector: str) -> None:
+    """使用 kubectl apply 更新关联的 manifest
+
+    Args:
+        chart_path (str): Chart 路径
+        release_name (str): Release name
+        values (str): values.yaml 文件路径
+        output_path (str): 输出内容目录路径
+        config_path (str): 自定义配置文件路径
+    """
+
+    shell_cmd = f'helm template --is-upgrade --no-hooks --skip-crds {release_name} {chart_path}'
+    if values is not None:
+        shell_cmd += f' -f {values}'
+    print('执行 helm template 命令...')
+    cmd_output = run_shell_cmd(shell_cmd)
+    release_original_manifests_generator = yaml.safe_load_all(cmd_output)
+    rendered_original_manifests = []
+    rendered_manifest_dict = {}
+    service_unique_keys = []
+    for rendered_manifest in release_original_manifests_generator:
+        rendered_original_manifests.append(rendered_manifest) # 第一次遍历生成器时，把 manifest 另外存入 list
+        manifest_unique_key = get_manifest_unique_key(rendered_manifest)
+        rendered_manifest_dict[manifest_unique_key] = rendered_manifest # 将 rendered_original_manifest 转成字典
+        if rendered_manifest['kind'] == 'Service':
+            service_unique_keys.append(manifest_unique_key)
+
+    selector_dict = parse_selector(selector)
+    if bool(selector_dict):
+        direct_selector_rendered_manifests = [rendered_manifest for rendered_manifest in rendered_original_manifests if is_manifest_match_selector(rendered_manifest, selector)]
+        selector_rendered_manifests = find_and_merge_related_rendered_manifests_of_deployments(direct_selector_rendered_manifests, rendered_manifest_dict, service_unique_keys)
+    else:
+        selector_rendered_manifests = rendered_original_manifests
+
+    if os.environ.get('DRY_RUN_FLAG', '0') == '1':
+        print('Manifests will apply:')
+        print(yaml.dump_all(selector_rendered_manifests, allow_unicode=True))
+    else:
+        apply_manifests(selector_rendered_manifests)
+
 def find_and_merge_related_rendered_manifests_of_deployments(deployment_manifests: List[dict],
                                                              manifest_dict: dict,
                                                              service_unique_keys: List[str]) -> List[dict]:
@@ -163,7 +208,6 @@ def find_and_merge_related_rendered_manifests_of_deployments(deployment_manifest
         # 提取 Deployment 关联的 Namespace
         namespace_unique_key = f'Namespace::{namespace}'
         if namespace_unique_key in manifest_dict and namespace_unique_key not in unique_key_set:
-            # related_rendered_manifests.append(rendered_manifest_dict[namespace_unique_key])
             related_namespace_manifests.append(manifest_dict[namespace_unique_key])
             unique_key_set.add(namespace_unique_key)
 

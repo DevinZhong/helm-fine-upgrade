@@ -6,7 +6,7 @@ import os
 import argparse
 from utils.yaml_utils import init_yaml_representer
 from services.image_service import image_version_diff
-from services.helm_service import diff
+from services.helm_service import diff, apply_upgrade
 from services.metadata_service import set_ownership_metadata
 from services.pod_label_service import rolling_update_pod_labels
 
@@ -43,9 +43,19 @@ if __name__ == '__main__':
     parser.add_argument('--dry-run', nargs='?', const=True, type=bool, help='仅模拟运行，不实际变更集群，update_ownership 操作可使用')
     parser.add_argument('-l', '--selector', nargs='?', default='', type=str, help='标签选择器，用于过滤 Deployment，控制影响范围')
     args = parser.parse_args()
+    
+    if args.dry_run:
+        os.environ['DRY_RUN_FLAG'] = '1'
+    else:
+        os.environ['DRY_RUN_FLAG'] = '0'
 
     if args.action == 'show-default-config':
         print_default_config()
+    elif args.action == 'apply':
+        apply_upgrade(chart_path=args.chart,
+             release_name=args.release_name,
+             values=args.values,
+             selector=args.selector)
     elif args.action == 'generate-comparison-file':
         diff(chart_path=args.chart,
              release_name=args.release_name,

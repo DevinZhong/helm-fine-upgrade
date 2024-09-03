@@ -3,7 +3,17 @@
 
 import time
 import yaml
+from typing import List
 from utils.shell_utils import run_shell_cmd
+
+def apply_manifests(rendered_manifests: List[dict]) -> None:
+    """execute `kubectl apply -f` for the rendered manifests.
+
+    Args:
+        rendered_manifests (List[dict]): rendered manifests which will apply
+    """
+    apply_cmd = 'kubectl apply -f -'
+    print(run_shell_cmd(apply_cmd, input=yaml.dump_all(rendered_manifests, allow_unicode=True)))
 
 def apply_deployment(manifest):
     name = manifest['metadata']['name']
