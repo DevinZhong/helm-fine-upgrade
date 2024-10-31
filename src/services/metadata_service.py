@@ -23,7 +23,7 @@ def set_ownership_metadata(chart_path: str,
         shell_cmd += f' -f {values}'
     print('执行 helm template 命令...')
     cmd_output = run_shell_cmd(shell_cmd)
-    release_original_manifests_generator = yaml.safe_load_all(cmd_output)
+    rendered_original_manifests_generator = yaml.safe_load_all(cmd_output)
     
     cluster_original_manifests = get_all_release_api_objects(release_name)
     cluster_manifest_dict = manifests_list_to_dict(cluster_original_manifests)
@@ -31,7 +31,7 @@ def set_ownership_metadata(chart_path: str,
     rendered_original_manifests = []
     rendered_manifest_dict = {}
     service_unique_keys = []
-    for rendered_manifest in release_original_manifests_generator:
+    for rendered_manifest in rendered_original_manifests_generator:
         rendered_original_manifests.append(rendered_manifest) # 第一次遍历生成器时，把 manifest 另外存入 list
         manifest_unique_key = get_manifest_unique_key(rendered_manifest)
         rendered_manifest_dict[manifest_unique_key] = rendered_manifest # 将 rendered_original_manifest 转成字典

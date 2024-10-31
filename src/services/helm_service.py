@@ -56,7 +56,7 @@ def diff(chart_path: str,
         shell_cmd += f' -f {values}'
     print('执行 helm template 命令...')
     cmd_output = run_shell_cmd(shell_cmd)
-    release_original_manifests_generator = yaml.safe_load_all(cmd_output)
+    rendered_original_manifests_generator = yaml.safe_load_all(cmd_output)
     # 提取所有 Release 接管的集群中的 manifest
     cluster_original_manifests = get_all_release_api_objects(release_name)
     cluster_manifest_dict = manifests_list_to_dict(cluster_original_manifests)
@@ -64,7 +64,7 @@ def diff(chart_path: str,
     manifest_key_set = set() # 与 release 中 manifest 匹配的 cluster 中的 manifest key
     rendered_manifest_dict = {}
     service_unique_keys = []
-    for rendered_manifest in release_original_manifests_generator:
+    for rendered_manifest in rendered_original_manifests_generator:
         rendered_original_manifests.append(rendered_manifest) # 第一次遍历生成器时，把 manifest 另外存入 list
         manifest_unique_key = get_manifest_unique_key(rendered_manifest)
         rendered_manifest_dict[manifest_unique_key] = rendered_manifest # 将 rendered_original_manifest 转成字典
@@ -86,11 +86,11 @@ def diff(chart_path: str,
 
     print('开始逐一对比API对象配置...')
     cluster_manifests = []
-    release_manifests = []
+    rendered_manifests = []
     for rendered_manifest in selector_rendered_manifests:
         # 过滤掉影响对比的字段
         remove_ignore_fields(rendered_manifest, config['ignore_fields'])
-        release_manifests.append(rendered_manifest)
+        rendered_manifests.append(rendered_manifest)
         manifest_unique_key = get_manifest_unique_key(rendered_manifest)
         # 寻找与 release manifest 匹配的集群中的 manifest
         if manifest_unique_key in cluster_manifest_dict:
@@ -121,7 +121,7 @@ def diff(chart_path: str,
 
     os.makedirs(output_path, exist_ok=True)
     with open(os.path.join(output_path, RENDERED_MANIFESTS_FILENAME), 'w', encoding='utf-8') as outfile:
-        yaml.dump_all(release_manifests, outfile, allow_unicode=True)
+        yaml.dump_all(rendered_manifests, outfile, allow_unicode=True)
     print(f'生成文件: {os.path.join(output_path, RENDERED_MANIFESTS_FILENAME)}.')
     with open(os.path.join(output_path, RUNTIME_MANIFESTS_FILENAME), 'w', encoding='utf-8') as outfile:
         yaml.dump_all(cluster_manifests, outfile, allow_unicode=True)
@@ -146,11 +146,11 @@ def apply_upgrade(chart_path: str,
         shell_cmd += f' -f {values}'
     print('执行 helm template 命令...')
     cmd_output = run_shell_cmd(shell_cmd)
-    release_original_manifests_generator = yaml.safe_load_all(cmd_output)
+    rendered_original_manifests_generator = yaml.safe_load_all(cmd_output)
     rendered_original_manifests = []
     rendered_manifest_dict = {}
     service_unique_keys = []
-    for rendered_manifest in release_original_manifests_generator:
+    for rendered_manifest in rendered_original_manifests_generator:
         rendered_original_manifests.append(rendered_manifest) # 第一次遍历生成器时，把 manifest 另外存入 list
         manifest_unique_key = get_manifest_unique_key(rendered_manifest)
         rendered_manifest_dict[manifest_unique_key] = rendered_manifest # 将 rendered_original_manifest 转成字典
