@@ -95,6 +95,20 @@ def parse_storageclass_in_pvc(manifest: dict) -> str:
         return None
     return manifest['spec']['storageClassName']
 
+def parse_pv_in_pvc(manifest: dict) -> str:
+    """解析 pvc manifest 中关联的 pv
+
+    Args:
+        manifest (dict): 传入 pvc manifest
+
+    Returns:
+        List[str]: 关联的 pv 名称
+    """
+    if 'spec' not in manifest:
+        return None
+    if 'volumeName' not in manifest['spec']:
+        return None
+    return manifest['spec']['volumeName']
 
 def find_and_merge_related_rendered_manifests_of_deployments(deployment_manifests: List[dict],
                                                              manifest_dict: dict,
@@ -144,6 +158,13 @@ def find_and_merge_related_rendered_manifests_of_deployments(deployment_manifest
                     if sc_unique_key in manifest_dict and sc_unique_key not in unique_key_set:
                         related_storageclass_manifests.append(manifest_dict[sc_unique_key])
                         unique_key_set.add(sc_unique_key)
+                else:
+                    pv_name = parse_pv_in_pvc(pvc)
+                    if pv_name is not None:
+                        pv_unique_key = f'PersistentVolume::{pv_name}'
+                        if pv_unique_key in manifest_dict and pv_unique_key not in unique_key_set:
+                            related_storageclass_manifests.append(manifest_dict[pv_unique_key])
+                            unique_key_set.add(pv_unique_key)
 
         # 提取 Deployment 关联的 Secret
         for secret_name in parse_secrets_in_deployment(rendered_manifest):
