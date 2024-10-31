@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
- 
+
 import yaml
 from ruamel.yaml import YAML
 from utils.shell_utils import run_shell_cmd
