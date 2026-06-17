@@ -3,12 +3,14 @@
 
 import yaml
 from multiprocessing import Pool
-from utils.shell_utils import run_shell_cmd
-from utils.helm_utils import get_api_object_spec
-from utils.helm_utils import get_api_object_spec, get_all_release_api_objects, manifests_list_to_dict, get_manifest_unique_key, is_manifest_match_selector
+from utils.shell_utils import run_cmd
+from utils.helm_utils import (build_helm_template_cmd, get_api_object_spec,
+                              get_all_release_api_objects,
+                              get_manifest_unique_key, is_manifest_match_selector,
+                              manifests_list_to_dict)
 from utils.kube_ops_utils import apply_deployment, delete_deployment
 
-APPLY_CMD = 'kubectl apply -f -'
+APPLY_CMD = ['kubectl', 'apply', '-f', '-']
 
 def rolling_update_pod_labels(chart_path: str,
                               release_name: str,
@@ -19,16 +21,17 @@ def rolling_update_pod_labels(chart_path: str,
     滚动更新 Pod 的标签，服务不中断
     """
 
-    shell_cmd = f'helm template --is-upgrade --no-hooks --skip-crds {release_name} {chart_path}'
-    if values is not None:
-        shell_cmd += f' -f {values}'
     print('执行 helm template 命令...')
-    cmd_output = run_shell_cmd(shell_cmd)
+    cmd_output = run_cmd(build_helm_template_cmd(release_name, chart_path, values))
+    if cmd_output is None:
+        return
     rendered_original_manifest = yaml.safe_load_all(cmd_output)
 
     deployments = []
     service_map = {}
     for rendered_manifest in rendered_original_manifest:
+        if rendered_manifest is None:
+            continue
         kind = rendered_manifest['kind']
         if kind == 'Deployment':
             deployments.append(rendered_manifest)
@@ -81,6 +84,8 @@ def rolling_update_pod_labels(chart_path: str,
             print(result.get())
         except Exception as e:
             print(e)
+    pool.close()
+    pool.join()
 
 def rolling_update_worker(rendered_deployment_manifest, cluster_deployment_manifest, service_map, apply_cmd):
     name = rendered_deployment_manifest['metadata']['name']
@@ -103,8 +108,9 @@ def rolling_update_worker(rendered_deployment_manifest, cluster_deployment_manif
     cluster_deployment_manifest['spec']['template']['metadata']['labels'] = renderedMatchLabels
     apply_deployment(cluster_deployment_manifest)
     # 4. 新 Deployment 就绪后更新 Service，把流量切回去
-    serviceItem = service_map[f'{namespace}:{name}']
-    print(run_shell_cmd(apply_cmd, input=yaml.dump(serviceItem, allow_unicode=True)))
+    serviceItem = service_map.get(f'{namespace}:{name}')
+    if serviceItem is not None:
+        print(run_cmd(apply_cmd, input=yaml.dump(serviceItem, allow_unicode=True)))
     # 5. 流量切回去后，将临时 Deployment 删除
     delete_deployment(namespace, temp_name)
 

@@ -10,10 +10,12 @@ def remove_ignore_fields(obj, ignore_config):
     obj: 当前处理对象
     ignore_config: 当前对象需要移除的字段树。_fields 字段内容为当前对象下需要移除的直接字段
     """
+    if obj is None or ignore_config is None:
+        return
     if isinstance(obj, list):
         for item in obj:
             remove_ignore_fields(item, ignore_config)
-    else:
+    elif isinstance(obj, dict):
         for key in ignore_config:
             if key == '_fields':
                 for field in ignore_config[key]:
@@ -54,11 +56,13 @@ def parse_selector(selector: str) -> dict:
     parts = selector.split(',')
     d = {}
     for part in parts:
+        part = part.strip()
+        if not part:
+            continue
         key_value = part.split('=')
         if len(key_value) == 2:
-            key, value = key_value
+            key, value = [item.strip() for item in key_value]
             d[key] = value
         else:
             raise ValueError('The value for the selector parameter is incorrect.')
-    print(f'selector: {d}')
     return d

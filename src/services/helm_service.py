@@ -5,9 +5,10 @@ import sys
 import os
 import yaml
 from utils.yaml_utils import init_yaml_representer
-from utils.shell_utils import run_shell_cmd
+from utils.shell_utils import run_cmd
 from utils.dict_utils import remove_ignore_fields, parse_selector
 from utils.helm_utils import (
+    build_helm_template_cmd,
     get_api_object_spec,
     get_all_release_api_objects,
     manifests_list_to_dict,
@@ -51,11 +52,10 @@ def diff(chart_path: str,
     with open(config_path, 'r', encoding='utf-8') as config_file:
         config = yaml.safe_load(config_file)
 
-    shell_cmd = f'helm template --is-upgrade --no-hooks --skip-crds {release_name} {chart_path}'
-    if values is not None:
-        shell_cmd += f' -f {values}'
     print('执行 helm template 命令...')
-    cmd_output = run_shell_cmd(shell_cmd)
+    cmd_output = run_cmd(build_helm_template_cmd(release_name, chart_path, values))
+    if cmd_output is None:
+        return
     rendered_original_manifests_generator = yaml.safe_load_all(cmd_output)
     # 提取所有 Release 接管的集群中的 manifest
     cluster_original_manifests = get_all_release_api_objects(release_name)
@@ -65,12 +65,14 @@ def diff(chart_path: str,
     rendered_manifest_dict = {}
     service_unique_keys = []
     for rendered_manifest in rendered_original_manifests_generator:
+        if rendered_manifest is None:
+            continue
         rendered_original_manifests.append(rendered_manifest) # 第一次遍历生成器时，把 manifest 另外存入 list
         manifest_unique_key = get_manifest_unique_key(rendered_manifest)
         rendered_manifest_dict[manifest_unique_key] = rendered_manifest # 将 rendered_original_manifest 转成字典
         if manifest_unique_key in cluster_manifest_dict:
             manifest_key_set.add(manifest_unique_key)
-        if rendered_manifest['kind'] == 'Service':
+        if rendered_manifest.get('kind') == 'Service':
             service_unique_keys.append(manifest_unique_key)
 
     # 集群中 Release 接管的，但又不在当前 release 中的对象 manifest key
@@ -141,20 +143,21 @@ def apply_upgrade(chart_path: str,
         config_path (str): 自定义配置文件路径
     """
 
-    shell_cmd = f'helm template --is-upgrade --no-hooks --skip-crds {release_name} {chart_path}'
-    if values is not None:
-        shell_cmd += f' -f {values}'
     print('执行 helm template 命令...')
-    cmd_output = run_shell_cmd(shell_cmd)
+    cmd_output = run_cmd(build_helm_template_cmd(release_name, chart_path, values))
+    if cmd_output is None:
+        return
     rendered_original_manifests_generator = yaml.safe_load_all(cmd_output)
     rendered_original_manifests = []
     rendered_manifest_dict = {}
     service_unique_keys = []
     for rendered_manifest in rendered_original_manifests_generator:
+        if rendered_manifest is None:
+            continue
         rendered_original_manifests.append(rendered_manifest) # 第一次遍历生成器时，把 manifest 另外存入 list
         manifest_unique_key = get_manifest_unique_key(rendered_manifest)
         rendered_manifest_dict[manifest_unique_key] = rendered_manifest # 将 rendered_original_manifest 转成字典
-        if rendered_manifest['kind'] == 'Service':
+        if rendered_manifest.get('kind') == 'Service':
             service_unique_keys.append(manifest_unique_key)
 
     selector_dict = parse_selector(selector)

@@ -4,23 +4,33 @@
 import os
 from typing import Iterable
 import yaml
-from utils.shell_utils import run_shell_cmd
+from utils.shell_utils import run_cmd
 from utils.dict_utils import parse_selector
-
-HELM_NAMESPACE = os.environ.get('HELM_NAMESPACE')
 
 K8S_KINDS = ['PodDisruptionBudget', 'ServiceAccount', 'Secret', 'ConfigMap',
              'PersistentVolume', 'PersistentVolumeClaim', 'Role', 'RoleBinding',
-             'Service', 'Deployment', 'HorizontalPodAutoscaler', 'CronJob', 'Endpoints']
+             'Service', 'Deployment', 'StatefulSet', 'DaemonSet',
+             'HorizontalPodAutoscaler', 'CronJob', 'Job', 'Ingress',
+             'NetworkPolicy', 'Endpoints']
+
+def get_helm_namespace() -> str:
+    return os.environ.get('HELM_NAMESPACE') or os.environ.get('NAMESPACE') or 'default'
+
+def build_helm_template_cmd(release_name: str, chart_path: str, values: str = None) -> list:
+    cmd = ['helm', 'template', '--is-upgrade', '--no-hooks', '--skip-crds',
+           release_name, chart_path]
+    if values is not None:
+        cmd.extend(['-f', values])
+    return cmd
 
 def get_api_object_spec(kind, name, namespace):
     """
     根据元信息，使用 kubectl 获取API对象的 yaml 配置
     """
-    cmd = f'kubectl get {kind} {name} -o yaml'
+    cmd = ['kubectl', 'get', kind, name, '-o', 'yaml']
     if namespace is not None:
-        cmd += f' -n {namespace}'
-    cmd_output = run_shell_cmd(cmd)
+        cmd.extend(['-n', namespace])
+    cmd_output = run_cmd(cmd)
     if cmd_output is not None:
         return yaml.safe_load(cmd_output)
     else:
@@ -36,11 +46,12 @@ def get_all_release_api_objects(release_name) -> list:
         list: API 对象配置列表
     """
     kinds = ','.join(K8S_KINDS)
-    cmd = f'kubectl get {kinds} --all-namespaces -l app.kubernetes.io/managed-by=Helm -o yaml'
-    cmd_output = run_shell_cmd(cmd)
+    cmd = ['kubectl', 'get', kinds, '--all-namespaces',
+           '-l', 'app.kubernetes.io/managed-by=Helm', '-o', 'yaml']
+    cmd_output = run_cmd(cmd)
     if cmd_output is not None:
         release_runtime_manifests = []
-        manifests = yaml.safe_load(cmd_output)['items']
+        manifests = yaml.safe_load(cmd_output).get('items', [])
         for manifest in manifests:
             if 'annotations' not in manifest['metadata']:
                 continue
@@ -49,13 +60,13 @@ def get_all_release_api_objects(release_name) -> list:
                 continue
             manifest_release_name = annotations['meta.helm.sh/release-name']
             manifest_release_namespace = annotations['meta.helm.sh/release-namespace']
-            if manifest_release_name != release_name or manifest_release_namespace != HELM_NAMESPACE:
+            if manifest_release_name != release_name or manifest_release_namespace != get_helm_namespace():
                 continue
             else:
                 release_runtime_manifests.append(manifest)
         return release_runtime_manifests                                    
     else:
-        return None
+        return []
 
 def get_manifest_unique_key(manifest: dict) -> str:
     """从 Manifest 中提取唯一 key
@@ -83,7 +94,24 @@ def manifests_list_to_dict(manifests: list) -> dict:
     Returns:
         dict: 转化后的字典
     """
-    return {get_manifest_unique_key(d): d for d in manifests}
+    return {get_manifest_unique_key(d): d for d in manifests or [] if d is not None}
+
+def get_container_image_versions(manifest: dict) -> dict:
+    template_spec = manifest.get('spec', {}).get('template', {}).get('spec', {})
+    containers = template_spec.get('containers', [])
+    image_versions = {}
+    for container in containers:
+        image = container.get('image')
+        name = container.get('name')
+        if not image or not name:
+            continue
+        if '@sha256:' in image:
+            image_versions[name] = image.rsplit('@sha256:', 1)[1]
+        elif ':' in image.rsplit('/', 1)[-1]:
+            image_versions[name] = image.rsplit(':', 1)[1]
+        else:
+            image_versions[name] = ''
+    return image_versions
 
 def get_image_version(manifest: dict) -> str:
     """从 manifest 中提取镜像版本号
@@ -94,9 +122,10 @@ def get_image_version(manifest: dict) -> str:
     Returns:
         str: docker image tag
     """
-    image = manifest['spec']['template']['spec']['containers'][0]['image']
-    parts = image.split(':')
-    return parts[1]
+    versions = get_container_image_versions(manifest)
+    if not versions:
+        return ''
+    return next(iter(versions.values()))
 
 def find_first_same_object_key_with_different_hash(keys: Iterable, object_key: str) -> str:
     """从 keys 中寻找只是末尾 hash 不同的对象唯一 key，常用语 Helm 中 ConfigMap 的匹配

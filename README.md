@@ -2,6 +2,11 @@
 
 A way for more controllable upgrading of Helm charts.
 
+`helm-fine-upgrade` helps teams inspect, adopt, and upgrade existing Kubernetes
+resources with finer control than a full `helm upgrade`. It is especially useful
+for legacy clusters where runtime resources, Helm charts, and values files may
+have drifted from each other.
+
 ## Plugin Manager
 
 To install this plugin, simply run Helm command:
@@ -39,10 +44,21 @@ helm fine-upgrade [ACTION] [NAME] [CHART] [flags]
 ### Plugin Action
 
 - `generate-comparison-file`: 生成集群当前配置与 chart 配置的对比文件
+- `apply`: 根据 chart 渲染结果应用资源，可配合选择器控制影响范围
 - `show-default-config`: 打印默认插件配置，可以自行重定向保存
 - `update-values-image-version`: 更新 values.yaml 的镜像版本，与集群中的镜像版本进行对齐
 - `update-ownership-metadata`: 更新 API 对象的元数据信息，使 Helm 可以接管相关对象的更新维护（用于接管其他 chart 或者其他方式创建的对象）
 - `rolling-update-pod-labels`: 滚动更新 pod 的标签。（Deployment 指定 Pod 的标签后，无法更新 Pod 的标签，此动作用于处理此类情况）
+
+### Safety Notes
+
+- Prefer `generate-comparison-file` before running mutating actions.
+- Use `--dry-run` where supported to review the commands or manifests first.
+- `apply`, `update-ownership-metadata`, and `rolling-update-pod-labels` may change
+  live cluster resources.
+- `apply` uses `kubectl apply` and does not update Helm release storage. Run a
+  regular Helm upgrade afterward when you need Helm release state to match the
+  cluster state.
 
 ### Examples
 

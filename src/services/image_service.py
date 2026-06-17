@@ -3,10 +3,12 @@
 
 import yaml
 from ruamel.yaml import YAML
-from utils.shell_utils import run_shell_cmd
-from utils.helm_utils import get_api_object_spec, get_image_version
+from utils.shell_utils import run_cmd
 from utils.dict_utils import set_value
-from utils.helm_utils import get_api_object_spec, get_all_release_api_objects, manifests_list_to_dict, get_manifest_unique_key
+from utils.helm_utils import (build_helm_template_cmd, get_api_object_spec,
+                              get_all_release_api_objects,
+                              get_manifest_unique_key, get_image_version,
+                              manifests_list_to_dict)
 
 
 # ruamel 可以最大化保留原文件格式，这里用于修改 values.yaml 文件内容
@@ -33,11 +35,10 @@ def image_version_diff(chart_path: str,
     with open(values, 'r', encoding='utf-8') as values_file:
         values_content = ruamel_yaml.load(values_file)
 
-    shell_cmd = f'helm template --is-upgrade --no-hooks --skip-crds {release_name} {chart_path}'
-    if values is not None:
-        shell_cmd += f' -f {values}'
     print('执行 helm template 命令...')
-    cmd_output = run_shell_cmd(shell_cmd)
+    cmd_output = run_cmd(build_helm_template_cmd(release_name, chart_path, values))
+    if cmd_output is None:
+        return
     rendered_original_manifest = yaml.safe_load_all(cmd_output)
     
     cluster_original_manifests = get_all_release_api_objects(release_name)
@@ -46,6 +47,8 @@ def image_version_diff(chart_path: str,
     print('开始逐一对比Deployment对象镜像版本...')
     different_image_dict = {}
     for rendered_manifest in rendered_original_manifest:
+        if rendered_manifest is None:
+            continue
         kind = rendered_manifest['kind']
         if kind != 'Deployment':
             continue
@@ -63,8 +66,9 @@ def image_version_diff(chart_path: str,
         cluster_version = get_image_version(cluster_manifest)
         if release_version == cluster_version:
             continue
-        elif name in config['image_version_fields']:
-            values_field_paths = config['image_version_fields'][name]
+        image_version_fields = config.get('image_version_fields') or {}
+        if name in image_version_fields:
+            values_field_paths = image_version_fields[name]
             set_value(different_image_dict, values_field_paths, cluster_version)
             set_value(values_content, values_field_paths, cluster_version)
 
