@@ -13,6 +13,18 @@ K8S_KINDS = ['PodDisruptionBudget', 'ServiceAccount', 'Secret', 'ConfigMap',
              'HorizontalPodAutoscaler', 'CronJob', 'Job', 'Ingress',
              'NetworkPolicy', 'Endpoints']
 
+CLUSTER_SCOPED_KINDS = {
+    'ClusterRole',
+    'ClusterRoleBinding',
+    'CustomResourceDefinition',
+    'MutatingWebhookConfiguration',
+    'Namespace',
+    'Node',
+    'PersistentVolume',
+    'StorageClass',
+    'ValidatingWebhookConfiguration',
+}
+
 def get_helm_namespace() -> str:
     return os.environ.get('HELM_NAMESPACE') or os.environ.get('NAMESPACE') or 'default'
 
@@ -22,6 +34,25 @@ def build_helm_template_cmd(release_name: str, chart_path: str, values: str = No
     if values is not None:
         cmd.extend(['-f', values])
     return cmd
+
+def build_helm_get_manifest_cmd(release_name: str) -> list:
+    return ['helm', 'get', 'manifest', release_name, '-n', get_helm_namespace()]
+
+def get_release_manifests(release_name: str) -> list:
+    """Read manifests stored in Helm release history."""
+    cmd_output = run_cmd(build_helm_get_manifest_cmd(release_name))
+    if cmd_output is None:
+        return None
+    return [manifest for manifest in yaml.safe_load_all(cmd_output)
+            if manifest is not None]
+
+def get_manifest_namespace(manifest: dict) -> str:
+    kind = manifest['kind']
+    if 'namespace' in manifest['metadata']:
+        return manifest['metadata']['namespace']
+    if kind in CLUSTER_SCOPED_KINDS:
+        return ''
+    return get_helm_namespace()
 
 def get_api_object_spec(kind, name, namespace):
     """
@@ -79,10 +110,7 @@ def get_manifest_unique_key(manifest: dict) -> str:
     """
     kind = manifest['kind']
     name = manifest['metadata']['name']
-    if 'namespace' in manifest['metadata']:
-        namespace = manifest['metadata']['namespace']
-    else:
-        namespace = ''
+    namespace = get_manifest_namespace(manifest)
     return f'{kind}:{namespace}:{name}'
 
 def manifests_list_to_dict(manifests: list) -> dict:

@@ -6,7 +6,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from utils.dict_utils import parse_selector, remove_ignore_fields, set_value
 from utils.manifest_utils import find_and_merge_related_rendered_manifests_of_deployments
-from services.helm_service import build_upgrade_plan, detect_immutable_field_changes
+from services.helm_service import (build_state_check, build_upgrade_plan,
+                                   detect_immutable_field_changes)
 
 
 class HelmServiceSupportTests(unittest.TestCase):
@@ -218,6 +219,102 @@ class HelmServiceSupportTests(unittest.TestCase):
         self.assertEqual(deployment_plan['immutable_field_changes'], [
             'spec.selector'
         ])
+
+    def test_build_state_check_reports_runtime_and_chart_drift(self):
+        release_manifests = [
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'same', 'namespace': 'demo'},
+                'data': {'value': '1'},
+            },
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'runtime-drift', 'namespace': 'demo'},
+                'data': {'value': 'release'},
+            },
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'missing-runtime', 'namespace': 'demo'},
+                'data': {'value': '1'},
+            },
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'delete-from-chart', 'namespace': 'demo'},
+                'data': {'value': '1'},
+            },
+        ]
+        runtime_manifests = [
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'same', 'namespace': 'demo'},
+                'data': {'value': '1'},
+            },
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'runtime-drift', 'namespace': 'demo'},
+                'data': {'value': 'runtime'},
+            },
+            {
+                'kind': 'Secret',
+                'metadata': {'name': 'runtime-extra', 'namespace': 'demo'},
+                'data': {'token': 'abc'},
+            },
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'delete-from-chart', 'namespace': 'demo'},
+                'data': {'value': '1'},
+            },
+        ]
+        chart_manifests = [
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'same', 'namespace': 'demo'},
+                'data': {'value': '1'},
+            },
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'runtime-drift', 'namespace': 'demo'},
+                'data': {'value': 'chart'},
+            },
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'missing-runtime', 'namespace': 'demo'},
+                'data': {'value': '1'},
+            },
+            {
+                'kind': 'Secret',
+                'metadata': {'name': 'chart-create', 'namespace': 'demo'},
+                'data': {'token': 'abc'},
+            },
+        ]
+
+        result = build_state_check(
+            release_manifests, runtime_manifests, chart_manifests,
+            {'ignore_fields': {}})
+
+        self.assertEqual(result['summary'], {
+            'release_resources': 4,
+            'runtime_resources': 4,
+            'chart_resources': 4,
+            'runtime_missing': 1,
+            'runtime_extra': 1,
+            'runtime_drift': 1,
+            'chart_create': 1,
+            'chart_update': 1,
+            'chart_delete': 1,
+        })
+        self.assertEqual(
+            result['runtime_consistency']['missing_from_runtime'][0]['key'],
+            'ConfigMap:demo:missing-runtime')
+        self.assertEqual(
+            result['runtime_consistency']['extra_in_runtime'][0]['key'],
+            'Secret:demo:runtime-extra')
+        self.assertEqual(
+            result['chart_consistency']['extra_in_chart'][0]['key'],
+            'Secret:demo:chart-create')
+        self.assertEqual(
+            result['chart_consistency']['missing_from_chart'][0]['key'],
+            'ConfigMap:demo:delete-from-chart')
 
 
 if __name__ == '__main__':

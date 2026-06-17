@@ -4,10 +4,13 @@ import unittest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
-from utils.helm_utils import (build_helm_template_cmd,
+from utils.helm_utils import (build_helm_get_manifest_cmd,
+                              build_helm_template_cmd,
                               find_first_same_object_key_with_different_hash,
                               get_container_image_versions,
                               get_helm_namespace,
+                              get_manifest_namespace,
+                              get_manifest_unique_key,
                               get_image_version,
                               manifests_list_to_dict)
 
@@ -21,6 +24,19 @@ class HelmUtilsTests(unittest.TestCase):
             'helm', 'template', '--is-upgrade', '--no-hooks', '--skip-crds',
             'my release', './chart dir', '-f', './values file.yaml'
         ])
+
+    def test_build_helm_get_manifest_cmd_uses_release_namespace(self):
+        original = os.environ.get('HELM_NAMESPACE')
+        os.environ['HELM_NAMESPACE'] = 'demo'
+        try:
+            self.assertEqual(build_helm_get_manifest_cmd('my release'), [
+                'helm', 'get', 'manifest', 'my release', '-n', 'demo'
+            ])
+        finally:
+            if original is None:
+                os.environ.pop('HELM_NAMESPACE', None)
+            else:
+                os.environ['HELM_NAMESPACE'] = original
 
     def test_get_helm_namespace_defaults_to_default(self):
         original = os.environ.pop('HELM_NAMESPACE', None)
@@ -39,6 +55,34 @@ class HelmUtilsTests(unittest.TestCase):
         result = manifests_list_to_dict(manifests)
 
         self.assertEqual(list(result.keys()), ['ConfigMap:demo:app'])
+
+    def test_manifest_unique_key_defaults_namespaced_resources_to_helm_namespace(self):
+        original = os.environ.get('HELM_NAMESPACE')
+        os.environ['HELM_NAMESPACE'] = 'demo'
+        try:
+            self.assertEqual(
+                get_manifest_unique_key({
+                    'kind': 'ConfigMap',
+                    'metadata': {'name': 'app'},
+                }),
+                'ConfigMap:demo:app')
+            self.assertEqual(
+                get_manifest_namespace({
+                    'kind': 'ConfigMap',
+                    'metadata': {'name': 'app'},
+                }),
+                'demo')
+            self.assertEqual(
+                get_manifest_unique_key({
+                    'kind': 'Namespace',
+                    'metadata': {'name': 'demo'},
+                }),
+                'Namespace::demo')
+        finally:
+            if original is None:
+                os.environ.pop('HELM_NAMESPACE', None)
+            else:
+                os.environ['HELM_NAMESPACE'] = original
 
     def test_find_first_same_object_key_with_different_hash(self):
         keys = {

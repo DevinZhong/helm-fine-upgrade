@@ -12,7 +12,9 @@ from utils.helm_utils import (
     build_helm_template_cmd,
     get_api_object_spec,
     get_all_release_api_objects,
+    get_release_manifests,
     manifests_list_to_dict,
+    get_manifest_namespace,
     get_manifest_unique_key,
     find_first_same_object_key_with_different_hash,
     is_manifest_match_selector
@@ -208,6 +210,114 @@ def plan_upgrade(chart_path: str,
     plan = build_upgrade_plan(rendered_manifests, cluster_manifests, config,
                               selector=selector)
     print(yaml.dump(plan, allow_unicode=True, sort_keys=False))
+
+def manifest_info(manifest: dict, status: str) -> dict:
+    return {
+        'key': get_manifest_unique_key(manifest),
+        'kind': manifest['kind'],
+        'namespace': get_manifest_namespace(manifest),
+        'name': manifest['metadata']['name'],
+        'status': status,
+    }
+
+def compare_manifest_sets(left_manifests: list,
+                          right_manifests: list,
+                          left_label: str,
+                          right_label: str,
+                          ignore_fields_config: dict) -> dict:
+    left_manifest_dict = manifests_list_to_dict(left_manifests)
+    right_manifest_dict = manifests_list_to_dict(right_manifests)
+    left_keys = set(left_manifest_dict.keys())
+    right_keys = set(right_manifest_dict.keys())
+    common_keys = left_keys & right_keys
+
+    missing_from_right = []
+    extra_in_right = []
+    changed = []
+
+    for key in sorted(left_keys - right_keys):
+        missing_from_right.append(manifest_info(
+            left_manifest_dict[key], f'missing_from_{right_label}'))
+
+    for key in sorted(right_keys - left_keys):
+        extra_in_right.append(manifest_info(
+            right_manifest_dict[key], f'extra_in_{right_label}'))
+
+    for key in sorted(common_keys):
+        if not manifests_are_equal(left_manifest_dict[key],
+                                   right_manifest_dict[key],
+                                   ignore_fields_config):
+            changed.append({
+                'key': key,
+                'kind': left_manifest_dict[key]['kind'],
+                'namespace': get_manifest_namespace(left_manifest_dict[key]),
+                'name': left_manifest_dict[key]['metadata']['name'],
+                'status': f'{left_label}_{right_label}_drift',
+            })
+
+    return {
+        f'missing_from_{right_label}': missing_from_right,
+        f'extra_in_{right_label}': extra_in_right,
+        'changed': changed,
+    }
+
+def build_state_check(release_manifests: list,
+                      runtime_manifests: list,
+                      chart_manifests: list,
+                      config: dict) -> dict:
+    ignore_fields_config = config.get('ignore_fields', {})
+    runtime_consistency = compare_manifest_sets(
+        release_manifests, runtime_manifests, 'release', 'runtime',
+        ignore_fields_config)
+    state_check = {
+        'summary': {
+            'release_resources': len(release_manifests or []),
+            'runtime_resources': len(runtime_manifests or []),
+            'chart_resources': len(chart_manifests or []) if chart_manifests is not None else None,
+            'runtime_missing': len(runtime_consistency['missing_from_runtime']),
+            'runtime_extra': len(runtime_consistency['extra_in_runtime']),
+            'runtime_drift': len(runtime_consistency['changed']),
+            'chart_create': 0,
+            'chart_update': 0,
+            'chart_delete': 0,
+        },
+        'runtime_consistency': runtime_consistency,
+    }
+
+    if chart_manifests is not None:
+        chart_consistency = compare_manifest_sets(
+            release_manifests, chart_manifests, 'release', 'chart',
+            ignore_fields_config)
+        state_check['summary']['chart_create'] = len(
+            chart_consistency['extra_in_chart'])
+        state_check['summary']['chart_update'] = len(
+            chart_consistency['changed'])
+        state_check['summary']['chart_delete'] = len(
+            chart_consistency['missing_from_chart'])
+        state_check['chart_consistency'] = chart_consistency
+
+    return state_check
+
+def state_check(release_name: str,
+                chart_path: str,
+                values: str,
+                config_path: str) -> None:
+    with open(config_path, 'r', encoding='utf-8') as config_file:
+        config = yaml.safe_load(config_file)
+
+    release_manifests = get_release_manifests(release_name)
+    if release_manifests is None:
+        return
+    runtime_manifests = get_all_release_api_objects(release_name)
+    chart_manifests = None
+    if chart_path is not None:
+        chart_manifests = render_chart_manifests(chart_path, release_name, values)
+        if chart_manifests is None:
+            return
+
+    result = build_state_check(release_manifests, runtime_manifests,
+                               chart_manifests, config)
+    print(yaml.dump(result, allow_unicode=True, sort_keys=False))
 
 def diff(chart_path: str,
          release_name: str,

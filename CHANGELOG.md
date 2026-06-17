@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0
+
+### Added
+
+- Add the `state-check` action to compare Helm release storage with live cluster
+  resources.
+- When a chart is provided, compare the current chart render with Helm release
+  storage to expose pending creates, updates, and deletes.
+- Add structured summaries for runtime missing resources, runtime extras,
+  runtime drift, chart creates, chart updates, and chart deletes.
+
 ## 0.5.0
 
 ### Added

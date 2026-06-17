@@ -43,6 +43,7 @@ helm fine-upgrade [ACTION] [NAME] [CHART] [flags]
 
 ### Plugin Action
 
+- `state-check`: 检查 Helm release 记录、集群运行态和当前 chart 之间的一致性
 - `plan`: 生成升级计划，展示新增、更新、接管、孤儿资源和不可变字段风险
 - `generate-comparison-file`: 生成集群当前配置与 chart 配置的对比文件
 - `apply`: 根据 chart 渲染结果应用资源，可配合选择器控制影响范围
@@ -85,6 +86,17 @@ Generate a structured upgrade plan:
 
 ```bash
 helm fine-upgrade plan \
+    my_release . \
+    --namespace my_release_namespace \
+    --values ./my-values.yaml \
+    --config ./.my-customized-config.yml
+```
+
+Check whether Helm release storage, live cluster resources, and the current chart
+are still aligned:
+
+```bash
+helm fine-upgrade state-check \
     my_release . \
     --namespace my_release_namespace \
     --values ./my-values.yaml \
