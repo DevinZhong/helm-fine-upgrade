@@ -43,6 +43,7 @@ helm fine-upgrade [ACTION] [NAME] [CHART] [flags]
 
 ### Plugin Action
 
+- `plan`: 生成升级计划，展示新增、更新、接管、孤儿资源和不可变字段风险
 - `generate-comparison-file`: 生成集群当前配置与 chart 配置的对比文件
 - `apply`: 根据 chart 渲染结果应用资源，可配合选择器控制影响范围
 - `show-default-config`: 打印默认插件配置，可以自行重定向保存
@@ -52,7 +53,7 @@ helm fine-upgrade [ACTION] [NAME] [CHART] [flags]
 
 ### Safety Notes
 
-- Prefer `generate-comparison-file` before running mutating actions.
+- Prefer `plan` and `generate-comparison-file` before running mutating actions.
 - Use `--dry-run` where supported to review the commands or manifests first.
 - `apply`, `update-ownership-metadata`, and `rolling-update-pod-labels` may change
   live cluster resources.
@@ -78,6 +79,16 @@ helm fine-upgrade generate-comparison-file \
     --config ./.my-customized-config.yml \
     --kubeconfig ~/.kube/my-kubeconfig.yaml \
     --debug
+```
+
+Generate a structured upgrade plan:
+
+```bash
+helm fine-upgrade plan \
+    my_release . \
+    --namespace my_release_namespace \
+    --values ./my-values.yaml \
+    --config ./.my-customized-config.yml
 ```
 
 ## TODO

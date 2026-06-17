@@ -3,6 +3,7 @@
 
 import sys
 import os
+import copy
 import yaml
 from utils.yaml_utils import init_yaml_representer
 from utils.shell_utils import run_cmd
@@ -32,6 +33,181 @@ DEFAULT_CONFIG_FILE = './config.yml'
 DEFAULT_OUPUT_DIRNAME = 'helm-fine-upgrade'
 RUNTIME_MANIFESTS_FILENAME = 'runtime_manifests.yaml'
 RENDERED_MANIFESTS_FILENAME = 'rendered_manifests.yaml'
+
+IMMUTABLE_FIELD_PATHS = {
+    'Deployment': ['spec.selector'],
+    'StatefulSet': ['spec.selector', 'spec.serviceName'],
+    'DaemonSet': ['spec.selector'],
+    'Service': ['spec.clusterIP', 'spec.clusterIPs', 'spec.ipFamilies',
+                'spec.ipFamilyPolicy'],
+    'PersistentVolumeClaim': ['spec.storageClassName'],
+}
+
+def get_field_value(dictionary: dict, field_path: str):
+    value = dictionary
+    for key in field_path.split('.'):
+        if not isinstance(value, dict) or key not in value:
+            return None
+        value = value[key]
+    return value
+
+def render_chart_manifests(chart_path: str, release_name: str, values: str) -> list:
+    print('执行 helm template 命令...')
+    cmd_output = run_cmd(build_helm_template_cmd(release_name, chart_path, values))
+    if cmd_output is None:
+        return None
+    return [manifest for manifest in yaml.safe_load_all(cmd_output)
+            if manifest is not None]
+
+def select_rendered_manifests(rendered_manifests: list, selector: str) -> list:
+    rendered_manifest_dict = {}
+    service_unique_keys = []
+    for rendered_manifest in rendered_manifests:
+        manifest_unique_key = get_manifest_unique_key(rendered_manifest)
+        rendered_manifest_dict[manifest_unique_key] = rendered_manifest
+        if rendered_manifest.get('kind') == 'Service':
+            service_unique_keys.append(manifest_unique_key)
+
+    selector_dict = parse_selector(selector)
+    if bool(selector_dict):
+        direct_selector_rendered_manifests = [
+            rendered_manifest for rendered_manifest in rendered_manifests
+            if is_manifest_match_selector(rendered_manifest, selector)
+        ]
+        return find_and_merge_related_rendered_manifests_of_deployments(
+            direct_selector_rendered_manifests, rendered_manifest_dict,
+            service_unique_keys)
+    return rendered_manifests
+
+def normalize_manifest_for_compare(manifest: dict, ignore_fields_config: dict) -> dict:
+    normalized_manifest = copy.deepcopy(manifest)
+    remove_ignore_fields(normalized_manifest, ignore_fields_config)
+    return normalized_manifest
+
+def manifests_are_equal(left: dict, right: dict, ignore_fields_config: dict) -> bool:
+    normalized_left = normalize_manifest_for_compare(left, ignore_fields_config)
+    normalized_right = normalize_manifest_for_compare(right, ignore_fields_config)
+    return yaml.dump(normalized_left, allow_unicode=True, sort_keys=True) == \
+        yaml.dump(normalized_right, allow_unicode=True, sort_keys=True)
+
+def detect_immutable_field_changes(rendered_manifest: dict,
+                                   cluster_manifest: dict) -> list:
+    kind = rendered_manifest.get('kind')
+    changes = []
+    for field_path in IMMUTABLE_FIELD_PATHS.get(kind, []):
+        rendered_value = get_field_value(rendered_manifest, field_path)
+        cluster_value = get_field_value(cluster_manifest, field_path)
+        if rendered_value != cluster_value:
+            changes.append(field_path)
+    return changes
+
+def build_upgrade_plan(rendered_manifests: list,
+                       cluster_manifests: list,
+                       config: dict,
+                       selector: str = '',
+                       lookup_manifest_func=get_api_object_spec) -> dict:
+    """Build a structured upgrade plan without changing cluster state."""
+    selected_rendered_manifests = select_rendered_manifests(
+        rendered_manifests, selector)
+    cluster_manifest_dict = manifests_list_to_dict(cluster_manifests)
+    selected_key_set = {get_manifest_unique_key(manifest)
+                        for manifest in selected_rendered_manifests}
+    matched_cluster_keys = set()
+    extra_manifest_key_set = set(cluster_manifest_dict.keys()) - selected_key_set
+    ignore_fields_config = config.get('ignore_fields', {})
+
+    plan = {
+        'summary': {
+            'create': 0,
+            'update': 0,
+            'unchanged': 0,
+            'adopt': 0,
+            'orphan': 0,
+            'immutable_risk': 0,
+        },
+        'resources': [],
+    }
+
+    for rendered_manifest in selected_rendered_manifests:
+        manifest_unique_key = get_manifest_unique_key(rendered_manifest)
+        status = 'create'
+        cluster_manifest = None
+        matched_cluster_key = None
+
+        if manifest_unique_key in cluster_manifest_dict:
+            cluster_manifest = cluster_manifest_dict[manifest_unique_key]
+            matched_cluster_key = manifest_unique_key
+            status = 'unchanged' if manifests_are_equal(
+                rendered_manifest, cluster_manifest, ignore_fields_config) else 'update'
+        else:
+            cluster_manifest = lookup_manifest_func(
+                rendered_manifest['kind'],
+                rendered_manifest['metadata']['name'],
+                namespace=rendered_manifest['metadata'].get('namespace'))
+            if cluster_manifest is not None:
+                status = 'adopt'
+            else:
+                same_manifest_key = find_first_same_object_key_with_different_hash(
+                    extra_manifest_key_set, manifest_unique_key)
+                if same_manifest_key is not None:
+                    cluster_manifest = cluster_manifest_dict[same_manifest_key]
+                    matched_cluster_key = same_manifest_key
+                    status = 'update'
+
+        immutable_field_changes = []
+        if cluster_manifest is not None:
+            immutable_field_changes = detect_immutable_field_changes(
+                rendered_manifest, cluster_manifest)
+            if matched_cluster_key is not None:
+                matched_cluster_keys.add(matched_cluster_key)
+                extra_manifest_key_set.discard(matched_cluster_key)
+
+        if immutable_field_changes:
+            plan['summary']['immutable_risk'] += 1
+
+        plan['summary'][status] += 1
+        resource_plan = {
+            'key': manifest_unique_key,
+            'kind': rendered_manifest['kind'],
+            'namespace': rendered_manifest['metadata'].get('namespace', ''),
+            'name': rendered_manifest['metadata']['name'],
+            'status': status,
+        }
+        if matched_cluster_key is not None and matched_cluster_key != manifest_unique_key:
+            resource_plan['matched_runtime_key'] = matched_cluster_key
+        if immutable_field_changes:
+            resource_plan['immutable_field_changes'] = immutable_field_changes
+        plan['resources'].append(resource_plan)
+
+    if not bool(parse_selector(selector)):
+        for manifest_unique_key in sorted(extra_manifest_key_set - matched_cluster_keys):
+            cluster_manifest = cluster_manifest_dict[manifest_unique_key]
+            plan['summary']['orphan'] += 1
+            plan['resources'].append({
+                'key': manifest_unique_key,
+                'kind': cluster_manifest['kind'],
+                'namespace': cluster_manifest['metadata'].get('namespace', ''),
+                'name': cluster_manifest['metadata']['name'],
+                'status': 'orphan',
+            })
+
+    return plan
+
+def plan_upgrade(chart_path: str,
+                 release_name: str,
+                 values: str,
+                 config_path: str,
+                 selector: str) -> None:
+    with open(config_path, 'r', encoding='utf-8') as config_file:
+        config = yaml.safe_load(config_file)
+
+    rendered_manifests = render_chart_manifests(chart_path, release_name, values)
+    if rendered_manifests is None:
+        return
+    cluster_manifests = get_all_release_api_objects(release_name)
+    plan = build_upgrade_plan(rendered_manifests, cluster_manifests, config,
+                              selector=selector)
+    print(yaml.dump(plan, allow_unicode=True, sort_keys=False))
 
 def diff(chart_path: str,
          release_name: str,

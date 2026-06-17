@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from utils.dict_utils import parse_selector, remove_ignore_fields, set_value
 from utils.manifest_utils import find_and_merge_related_rendered_manifests_of_deployments
+from services.helm_service import build_upgrade_plan, detect_immutable_field_changes
 
 
 class HelmServiceSupportTests(unittest.TestCase):
@@ -99,6 +100,123 @@ class HelmServiceSupportTests(unittest.TestCase):
         self.assertEqual([manifest['kind'] for manifest in related], [
             'Namespace', 'StorageClass', 'PersistentVolumeClaim',
             'Secret', 'ConfigMap', 'Deployment', 'Service'
+        ])
+
+    def test_detect_immutable_field_changes_for_deployment_selector(self):
+        rendered = {
+            'kind': 'Deployment',
+            'spec': {'selector': {'matchLabels': {'app': 'new'}}},
+        }
+        cluster = {
+            'kind': 'Deployment',
+            'spec': {'selector': {'matchLabels': {'app': 'old'}}},
+        }
+
+        self.assertEqual(detect_immutable_field_changes(rendered, cluster), [
+            'spec.selector'
+        ])
+
+    def test_build_upgrade_plan_classifies_common_resource_states(self):
+        rendered_manifests = [
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'same', 'namespace': 'demo'},
+                'data': {'value': '1'},
+            },
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'changed', 'namespace': 'demo'},
+                'data': {'value': '2'},
+            },
+            {
+                'kind': 'Secret',
+                'metadata': {'name': 'adopt-me', 'namespace': 'demo'},
+                'data': {'token': 'abc'},
+            },
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'new', 'namespace': 'demo'},
+                'data': {'value': '3'},
+            },
+            {
+                'kind': 'Deployment',
+                'metadata': {'name': 'api', 'namespace': 'demo'},
+                'spec': {
+                    'selector': {'matchLabels': {'app': 'api-new'}},
+                    'template': {
+                        'metadata': {'labels': {'app': 'api-new'}},
+                        'spec': {'containers': [{'name': 'api', 'image': 'api:1'}]},
+                    },
+                },
+            },
+        ]
+        cluster_manifests = [
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'same', 'namespace': 'demo'},
+                'data': {'value': '1'},
+            },
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'changed', 'namespace': 'demo'},
+                'data': {'value': 'old'},
+            },
+            {
+                'kind': 'Deployment',
+                'metadata': {'name': 'api', 'namespace': 'demo'},
+                'spec': {
+                    'selector': {'matchLabels': {'app': 'api-old'}},
+                    'template': {
+                        'metadata': {'labels': {'app': 'api-old'}},
+                        'spec': {'containers': [{'name': 'api', 'image': 'api:1'}]},
+                    },
+                },
+            },
+            {
+                'kind': 'Service',
+                'metadata': {'name': 'old', 'namespace': 'demo'},
+                'spec': {'ports': [{'port': 80}]},
+            },
+        ]
+
+        def lookup(kind, name, namespace=None):
+            if kind == 'Secret' and name == 'adopt-me' and namespace == 'demo':
+                return {
+                    'kind': 'Secret',
+                    'metadata': {'name': 'adopt-me', 'namespace': 'demo'},
+                    'data': {'token': 'abc'},
+                }
+            return None
+
+        plan = build_upgrade_plan(
+            rendered_manifests,
+            cluster_manifests,
+            {'ignore_fields': {}},
+            lookup_manifest_func=lookup)
+
+        self.assertEqual(plan['summary'], {
+            'create': 1,
+            'update': 2,
+            'unchanged': 1,
+            'adopt': 1,
+            'orphan': 1,
+            'immutable_risk': 1,
+        })
+        resource_statuses = {
+            resource['key']: resource['status']
+            for resource in plan['resources']
+        }
+        self.assertEqual(resource_statuses['ConfigMap:demo:same'], 'unchanged')
+        self.assertEqual(resource_statuses['ConfigMap:demo:changed'], 'update')
+        self.assertEqual(resource_statuses['Secret:demo:adopt-me'], 'adopt')
+        self.assertEqual(resource_statuses['ConfigMap:demo:new'], 'create')
+        self.assertEqual(resource_statuses['Service:demo:old'], 'orphan')
+        deployment_plan = [
+            resource for resource in plan['resources']
+            if resource['key'] == 'Deployment:demo:api'
+        ][0]
+        self.assertEqual(deployment_plan['immutable_field_changes'], [
+            'spec.selector'
         ])
 
 

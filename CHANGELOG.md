@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0
+
+### Added
+
+- Add the `plan` action to generate a structured upgrade plan before mutating
+  live cluster resources.
+- Report per-resource statuses for `create`, `update`, `unchanged`, `adopt`,
+  and `orphan`.
+- Detect common immutable-field risks for Deployment, StatefulSet, DaemonSet,
+  Service, and PersistentVolumeClaim resources.
+- Reuse selector-aware related-resource discovery when building plans.
+
 ## 0.4.0
 
 ### Added
