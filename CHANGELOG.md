@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0
+
+### Added
+
+- Add the `adopt-plan` action to analyze Helm ownership metadata before
+  adopting existing cluster resources.
+- Report resources as `managed`, `adoptable`, `needs_metadata_update`,
+  `conflict`, or `missing`.
+- Include kubectl annotation and label command previews for resources that can
+  be adopted or repaired.
+
 ## 0.6.0
 
 ### Added

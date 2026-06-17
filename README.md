@@ -43,6 +43,7 @@ helm fine-upgrade [ACTION] [NAME] [CHART] [flags]
 
 ### Plugin Action
 
+- `adopt-plan`: 分析 chart 渲染资源和集群已有资源的接管关系，并输出接管命令预览
 - `state-check`: 检查 Helm release 记录、集群运行态和当前 chart 之间的一致性
 - `plan`: 生成升级计划，展示新增、更新、接管、孤儿资源和不可变字段风险
 - `generate-comparison-file`: 生成集群当前配置与 chart 配置的对比文件
@@ -101,6 +102,16 @@ helm fine-upgrade state-check \
     --namespace my_release_namespace \
     --values ./my-values.yaml \
     --config ./.my-customized-config.yml
+```
+
+Analyze which existing resources can be adopted by the release:
+
+```bash
+helm fine-upgrade adopt-plan \
+    my_release . \
+    --namespace my_release_namespace \
+    --values ./my-values.yaml \
+    -l app=my-service
 ```
 
 ## TODO

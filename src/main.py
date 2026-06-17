@@ -7,7 +7,7 @@ import argparse
 from utils.yaml_utils import init_yaml_representer
 from services.image_service import image_version_diff
 from services.helm_service import diff, apply_upgrade, plan_upgrade, state_check
-from services.metadata_service import set_ownership_metadata
+from services.metadata_service import adopt_plan, set_ownership_metadata
 from services.pod_label_service import rolling_update_pod_labels
 
 if getattr(sys, 'frozen', False):
@@ -56,6 +56,11 @@ if __name__ == '__main__':
              chart_path=args.chart,
              values=args.values,
              config_path=args.config)
+    elif args.action == 'adopt-plan':
+        adopt_plan(chart_path=args.chart,
+             release_name=args.release_name,
+             values=args.values,
+             selector=args.selector)
     elif args.action == 'plan':
         plan_upgrade(chart_path=args.chart,
              release_name=args.release_name,
