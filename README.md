@@ -1,27 +1,43 @@
 # helm-fine-upgrade
 
-A way for more controllable upgrading of Helm charts.
+A Helm plugin for controlled upgrades, release-state inspection, and adoption of
+existing Kubernetes resources.
 
-`helm-fine-upgrade` helps teams inspect, adopt, and upgrade existing Kubernetes
-resources with finer control than a full `helm upgrade`. It is especially useful
-for legacy clusters where runtime resources, Helm charts, and values files may
-have drifted from each other.
+`helm-fine-upgrade` is designed for real clusters where Helm charts, live
+resources, and values files may have drifted over time. It helps you inspect
+upgrade impact, compare Helm release storage with runtime state, adopt existing
+resources into a release, and apply carefully selected rendered manifests.
 
-## Plugin Manager
+## When To Use It
 
-To install this plugin, simply run Helm command:
+Use this plugin when you need to:
+
+- Preview what a chart upgrade would create, update, adopt, or leave orphaned.
+- Check whether Helm release storage, the current chart, and live resources are
+  still aligned.
+- Adopt existing Kubernetes resources into a Helm release.
+- Compare simplified rendered manifests with simplified runtime manifests.
+- Perform a carefully scoped apply for selected workloads and related resources.
+- Align values files with the image tags already running in the cluster.
+- Migrate Deployment Pod labels when immutable selector fields are involved.
+
+This project does not replace Helm, GitOps controllers, or `helm diff`. It is a
+companion tool for messy migration and upgrade situations where you need a clear
+plan before changing live cluster resources.
+
+## Install
 
 ```bash
 helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
 ```
 
-Before use the plugin, run below command to add python dependences:
+Install Python dependencies:
 
 ```bash
 cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
 ```
 
-To uninstall, run:
+Uninstall:
 
 ```bash
 helm plugin uninstall fine-upgrade
@@ -29,64 +45,144 @@ helm plugin uninstall fine-upgrade
 
 ## Usage
 
-Run this command to view the help document:
-
-```bash
-helm fine-upgrade --help
-```
-
-### Plugin Basic Command Structure
-
 ```bash
 helm fine-upgrade [COMMAND] [NAME] [CHART] [flags]
 ```
 
-### Plugin Action
-
-- `adopt-plan`: 分析 chart 渲染资源和集群已有资源的接管关系，并输出接管命令预览
-- `state-check`: 检查 Helm release 记录、集群运行态和当前 chart 之间的一致性
-- `plan`: 生成升级计划，展示新增、更新、接管、孤儿资源和不可变字段风险
-- `generate-comparison-file`: 生成集群当前配置与 chart 配置的对比文件
-- `apply`: 根据 chart 渲染结果应用资源，可配合选择器控制影响范围
-- `show-default-config`: 打印默认插件配置，可以自行重定向保存
-- `update-values-image-version`: 更新 values.yaml 的镜像版本，与集群中的镜像版本进行对齐
-- `update-ownership-metadata`: 更新 API 对象的元数据信息，使 Helm 可以接管相关对象的更新维护（用于接管其他 chart 或者其他方式创建的对象）
-- `rolling-update-pod-labels`: 滚动更新 pod 的标签。（Deployment 指定 Pod 的标签后，无法更新 Pod 的标签，此动作用于处理此类情况）
-
-### Safety Notes
-
-- Prefer `plan` and `generate-comparison-file` before running mutating actions.
-- Use `--dry-run` where supported to review the commands or manifests first.
-- `apply`, `update-ownership-metadata`, and `rolling-update-pod-labels` may change
-  live cluster resources.
-- `apply` uses `kubectl apply` and does not update Helm release storage. Run a
-  regular Helm upgrade afterward when you need Helm release state to match the
-  cluster state.
-
-### Kubernetes Connection Flags
-
-Most commands support these flags:
-
-- `--namespace`: Helm release namespace
-- `--kubeconfig`: kubeconfig file path
-- `--context`: Kubernetes context
-- `--timeout`: kubectl request timeout, for example `30s`
-- `--output-format`: structured output format for report commands, `yaml` or
-  `json`
-
-### Examples
-
-Generate simplified helm rendered manifests and cluster runtime manifests files to the default `./helm-fine-upgrade` directory. (You can then compare them using the vscode editor.)
-
-Using the `--debug` flag allows you to view the executed SHELL commands
+View help:
 
 ```bash
-# Execute `generate-comparison-file` action in debug mode in chart root directory.
-# Release name is `my_release` and release namespace is `my_release_namespace`.
-# Specify values in a YAML file `./my-values.yaml`.
-# Specify the plugin configuration file path as `./.my-customized-config.yml`.
-helm fine-upgrade generate-comparison-file \
-    my_release . \
+helm fine-upgrade --help
+helm fine-upgrade plan --help
+```
+
+## Commands
+
+Read-only commands:
+
+- `plan`: Generate an upgrade plan with creates, updates, adoptions, orphans,
+  and immutable-field risks.
+- `state-check`: Compare Helm release storage, live cluster resources, and
+  optionally the current chart render.
+- `adopt-plan`: Analyze whether existing cluster resources can be adopted by the
+  target release.
+- `generate-comparison-file`: Write simplified rendered and runtime manifests
+  for manual diffing.
+- `show-default-config`: Print the default ignore-field and image-field config.
+
+Mutating commands:
+
+- `apply`: Apply selected rendered manifests with `kubectl apply`.
+- `update-values-image-version`: Update values.yaml image tags from live
+  Deployment images.
+- `update-ownership-metadata`: Add or repair Helm ownership metadata on
+  existing resources.
+- `rolling-update-pod-labels`: Migrate Deployment Pod labels by creating a
+  temporary Deployment and switching traffic.
+
+## Recommended Workflow
+
+1. Check release and runtime state:
+
+   ```bash
+   helm fine-upgrade state-check my_release . \
+       --namespace my_release_namespace \
+       --values ./my-values.yaml
+   ```
+
+2. Generate an upgrade plan:
+
+   ```bash
+   helm fine-upgrade plan my_release . \
+       --namespace my_release_namespace \
+       --values ./my-values.yaml \
+       --output-format json
+   ```
+
+3. Generate comparison files for manual review:
+
+   ```bash
+   helm fine-upgrade generate-comparison-file my_release . \
+       --namespace my_release_namespace \
+       --values ./my-values.yaml \
+       --config ./.my-customized-config.yml
+   ```
+
+4. If the chart needs to adopt existing resources, inspect adoption first:
+
+   ```bash
+   helm fine-upgrade adopt-plan my_release . \
+       --namespace my_release_namespace \
+       --values ./my-values.yaml \
+       -l app=my-service
+   ```
+
+5. Use mutating commands only after reviewing the plan and, where supported,
+   `--dry-run`.
+
+## Common Flags
+
+Most commands support:
+
+- `--namespace`: Helm release namespace.
+- `--kubeconfig`: kubeconfig file path.
+- `--context` / `--kube-context`: Kubernetes context.
+- `--timeout`: kubectl request timeout, for example `30s`.
+- `--values`: values file passed to `helm template`.
+- `--config`: plugin config file path.
+- `--selector` / `-l`: label selector used to scope Deployment-oriented flows.
+- `--output-format`: `yaml` or `json` for structured report commands.
+- `--dry-run`: preview supported mutating actions.
+- `--debug`: print Helm and kubectl commands.
+
+## Safety Notes
+
+- Prefer `state-check`, `plan`, `adopt-plan`, and `generate-comparison-file`
+  before running mutating commands.
+- `apply`, `update-ownership-metadata`, and `rolling-update-pod-labels` may
+  change live cluster resources.
+- `apply` uses `kubectl apply` and does not update Helm release storage. Run a
+  regular `helm upgrade` afterward when Helm release state must match runtime
+  state.
+- `rolling-update-pod-labels` is intended for special selector/label migration
+  cases. Test it in a non-production environment before using it on critical
+  workloads.
+- `adopt-plan` is read-only. `update-ownership-metadata` performs the ownership
+  metadata changes.
+
+## Examples
+
+State check in YAML:
+
+```bash
+helm fine-upgrade state-check my_release . \
+    --namespace my_release_namespace \
+    --values ./my-values.yaml \
+    --config ./.my-customized-config.yml
+```
+
+Plan in JSON:
+
+```bash
+helm fine-upgrade plan my_release . \
+    --namespace my_release_namespace \
+    --values ./my-values.yaml \
+    --output-format json
+```
+
+Adoption analysis:
+
+```bash
+helm fine-upgrade adopt-plan my_release . \
+    --namespace my_release_namespace \
+    --values ./my-values.yaml \
+    -l app=my-service
+```
+
+Comparison files:
+
+```bash
+helm fine-upgrade generate-comparison-file my_release . \
     --namespace my_release_namespace \
     --values ./my-values.yaml \
     --config ./.my-customized-config.yml \
@@ -94,56 +190,9 @@ helm fine-upgrade generate-comparison-file \
     --debug
 ```
 
-Generate a structured upgrade plan:
-
-```bash
-helm fine-upgrade plan \
-    my_release . \
-    --namespace my_release_namespace \
-    --values ./my-values.yaml \
-    --config ./.my-customized-config.yml \
-    --output-format json
-```
-
-Check whether Helm release storage, live cluster resources, and the current chart
-are still aligned:
-
-```bash
-helm fine-upgrade state-check \
-    my_release . \
-    --namespace my_release_namespace \
-    --values ./my-values.yaml \
-    --config ./.my-customized-config.yml
-```
-
-Analyze which existing resources can be adopted by the release:
-
-```bash
-helm fine-upgrade adopt-plan \
-    my_release . \
-    --namespace my_release_namespace \
-    --values ./my-values.yaml \
-    -l app=my-service
-```
-
-## TODO
-
-- [x] 实现初版基础对比功能
-- [x] 接入 Helm 插件机制
-- [x] 补充初始化说明
-- [x] 配置文件输出
-- [x] 同步集群镜像版本到 values.yaml 文件
-- [x] 接管集群对象到当前 Release
-- [ ] ~~Nacos 配置对比~~
-- [ ] 中文文档
-- [ ] 英文文档
-- [x] 实现平滑更新 Pod 标签
-- [ ] 通过选择器过滤对比范围
-- [ ] 通过选择器手动更新对象
-
 ## Development
 
-Run local checks:
+Install dependencies and run local checks:
 
 ```bash
 python -m pip install -r requirements.txt
@@ -151,11 +200,12 @@ python -m unittest discover -s tests -p "*_tests.py"
 python -m py_compile src/main.py src/services/helm_service.py src/services/metadata_service.py src/services/image_service.py src/services/pod_label_service.py src/utils/helm_utils.py src/utils/kube_ops_utils.py src/utils/dict_utils.py src/utils/manifest_utils.py src/utils/shell_utils.py src/utils/output_utils.py
 ```
 
+GitHub Actions runs the same unit-test and compile checks on pull requests and
+pushes to `main`.
+
 ## Contributing
 
-- We follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) to submit code.
-- If you have any good ideas or bugs or suggestions, please feel free to submit an issue.
-- Talk is cheap. Welcome to submit your valuable pull request.
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.0
+
+### Added
+
+- Publish the first stable command set for Helm fine-grained upgrade,
+  release-state inspection, and resource adoption workflows.
+- Add release documentation, contribution guidance, and a v1.0 release
+  checklist.
+
 ## 0.9.0
 
 ### Added
