@@ -71,6 +71,8 @@ Most commands support these flags:
 - `--kubeconfig`: kubeconfig file path
 - `--context`: Kubernetes context
 - `--timeout`: kubectl request timeout, for example `30s`
+- `--output-format`: structured output format for report commands, `yaml` or
+  `json`
 
 ### Examples
 
@@ -99,7 +101,8 @@ helm fine-upgrade plan \
     my_release . \
     --namespace my_release_namespace \
     --values ./my-values.yaml \
-    --config ./.my-customized-config.yml
+    --config ./.my-customized-config.yml \
+    --output-format json
 ```
 
 Check whether Helm release storage, live cluster resources, and the current chart
@@ -137,6 +140,16 @@ helm fine-upgrade adopt-plan \
 - [x] 实现平滑更新 Pod 标签
 - [ ] 通过选择器过滤对比范围
 - [ ] 通过选择器手动更新对象
+
+## Development
+
+Run local checks:
+
+```bash
+python -m pip install -r requirements.txt
+python -m unittest discover -s tests -p "*_tests.py"
+python -m py_compile src/main.py src/services/helm_service.py src/services/metadata_service.py src/services/image_service.py src/services/pod_label_service.py src/utils/helm_utils.py src/utils/kube_ops_utils.py src/utils/dict_utils.py src/utils/manifest_utils.py src/utils/shell_utils.py src/utils/output_utils.py
+```
 
 ## Contributing
 

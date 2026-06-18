@@ -5,6 +5,7 @@ import yaml
 from ruamel.yaml import YAML
 from utils.shell_utils import run_cmd
 from utils.dict_utils import set_value
+from utils.output_utils import print_status, print_structured_output
 from utils.helm_utils import (build_helm_template_cmd, get_api_object_spec,
                               get_all_release_api_objects,
                               get_manifest_unique_key, get_image_version,
@@ -19,7 +20,8 @@ def image_version_diff(chart_path: str,
                        release_name: str,
                        values: str,
                        config_path: str,
-                       dry_run: str) -> None:
+                       dry_run: str,
+                       output_format: str = 'yaml') -> None:
     """根据 helm template 生成的 yaml 文件，拉取集群对象配置，输出有差异的镜像版本，或直接更新 values 文件
 
     Args:
@@ -35,7 +37,7 @@ def image_version_diff(chart_path: str,
     with open(values, 'r', encoding='utf-8') as values_file:
         values_content = ruamel_yaml.load(values_file)
 
-    print('执行 helm template 命令...')
+    print_status('执行 helm template 命令...')
     cmd_output = run_cmd(build_helm_template_cmd(release_name, chart_path, values))
     if cmd_output is None:
         return
@@ -73,8 +75,8 @@ def image_version_diff(chart_path: str,
             set_value(values_content, values_field_paths, cluster_version)
 
     if dry_run:
-        print('镜像版本差异：')
-        print(yaml.dump(different_image_dict, allow_unicode=True))
+        print_status('镜像版本差异：')
+        print_structured_output(different_image_dict, output_format)
     else:
         with open(values, 'w', encoding='utf-8') as values_file:
             ruamel_yaml.dump(values_content, values_file)

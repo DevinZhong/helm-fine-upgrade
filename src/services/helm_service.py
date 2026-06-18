@@ -8,6 +8,7 @@ import yaml
 from utils.yaml_utils import init_yaml_representer
 from utils.shell_utils import run_cmd
 from utils.dict_utils import remove_ignore_fields, parse_selector
+from utils.output_utils import print_status, print_structured_output
 from utils.helm_utils import (
     build_helm_template_cmd,
     get_api_object_spec,
@@ -54,7 +55,7 @@ def get_field_value(dictionary: dict, field_path: str):
     return value
 
 def render_chart_manifests(chart_path: str, release_name: str, values: str) -> list:
-    print('执行 helm template 命令...')
+    print_status('执行 helm template 命令...')
     cmd_output = run_cmd(build_helm_template_cmd(release_name, chart_path, values))
     if cmd_output is None:
         return None
@@ -199,7 +200,8 @@ def plan_upgrade(chart_path: str,
                  release_name: str,
                  values: str,
                  config_path: str,
-                 selector: str) -> None:
+                 selector: str,
+                 output_format: str = 'yaml') -> None:
     with open(config_path, 'r', encoding='utf-8') as config_file:
         config = yaml.safe_load(config_file)
 
@@ -209,7 +211,7 @@ def plan_upgrade(chart_path: str,
     cluster_manifests = get_all_release_api_objects(release_name)
     plan = build_upgrade_plan(rendered_manifests, cluster_manifests, config,
                               selector=selector)
-    print(yaml.dump(plan, allow_unicode=True, sort_keys=False))
+    print_structured_output(plan, output_format)
 
 def manifest_info(manifest: dict, status: str) -> dict:
     return {
@@ -301,7 +303,8 @@ def build_state_check(release_manifests: list,
 def state_check(release_name: str,
                 chart_path: str,
                 values: str,
-                config_path: str) -> None:
+                config_path: str,
+                output_format: str = 'yaml') -> None:
     with open(config_path, 'r', encoding='utf-8') as config_file:
         config = yaml.safe_load(config_file)
 
@@ -317,7 +320,7 @@ def state_check(release_name: str,
 
     result = build_state_check(release_manifests, runtime_manifests,
                                chart_manifests, config)
-    print(yaml.dump(result, allow_unicode=True, sort_keys=False))
+    print_structured_output(result, output_format)
 
 def diff(chart_path: str,
          release_name: str,

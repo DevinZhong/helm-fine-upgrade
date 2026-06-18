@@ -6,6 +6,7 @@ import os
 import argparse
 from utils.yaml_utils import init_yaml_representer
 from utils.helm_utils import configure_kube_options
+from utils.output_utils import SUPPORTED_OUTPUT_FORMATS
 
 if getattr(sys, 'frozen', False):
     BASEDIR = sys._MEIPASS
@@ -41,6 +42,8 @@ def add_common_options(parser):
                         help='仅模拟运行，不实际变更集群')
     parser.add_argument('--debug', action='store_true',
                         help='打印执行的 Helm/kubectl 命令')
+    parser.add_argument('--output-format', choices=SUPPORTED_OUTPUT_FORMATS,
+                        default='yaml', help='结构化输出格式')
     parser.add_argument('-l', '--selector', default='', type=str,
                         help='标签选择器，用于过滤 Deployment，控制影响范围')
 
@@ -131,20 +134,23 @@ def dispatch(args):
         state_check(release_name=args.release_name,
              chart_path=args.chart,
              values=args.values,
-             config_path=args.config)
+             config_path=args.config,
+             output_format=args.output_format)
     elif args.action == 'adopt-plan':
         from services.metadata_service import adopt_plan
         adopt_plan(chart_path=args.chart,
              release_name=args.release_name,
              values=args.values,
-             selector=args.selector)
+             selector=args.selector,
+             output_format=args.output_format)
     elif args.action == 'plan':
         from services.helm_service import plan_upgrade
         plan_upgrade(chart_path=args.chart,
              release_name=args.release_name,
              values=args.values,
              config_path=args.config,
-             selector=args.selector)
+             selector=args.selector,
+             output_format=args.output_format)
     elif args.action == 'apply':
         from services.helm_service import apply_upgrade
         apply_upgrade(chart_path=args.chart,
@@ -165,7 +171,8 @@ def dispatch(args):
                            release_name=args.release_name,
                            values=args.values,
                            config_path=args.config,
-                           dry_run=args.dry_run)
+                           dry_run=args.dry_run,
+                           output_format=args.output_format)
     elif args.action == 'update-ownership-metadata':
         from services.metadata_service import set_ownership_metadata
         set_ownership_metadata(chart_path=args.chart,

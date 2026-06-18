@@ -4,6 +4,7 @@
 import yaml
 from utils.shell_utils import run_cmd
 from utils.dict_utils import parse_selector
+from utils.output_utils import print_status, print_structured_output
 from utils.helm_utils import (build_helm_template_cmd, build_kubectl_cmd,
                               get_api_object_spec, get_all_release_api_objects,
                               get_helm_namespace,
@@ -117,8 +118,9 @@ def build_adopt_plan(rendered_manifests: list,
 def adopt_plan(chart_path: str,
                release_name: str,
                values: str,
-               selector: str) -> None:
-    print('执行 helm template 命令...')
+               selector: str,
+               output_format: str = 'yaml') -> None:
+    print_status('执行 helm template 命令...')
     cmd_output = run_cmd(build_helm_template_cmd(release_name, chart_path, values))
     if cmd_output is None:
         return
@@ -128,7 +130,7 @@ def adopt_plan(chart_path: str,
     ]
     plan = build_adopt_plan(rendered_manifests, release_name,
                             selector=selector)
-    print(yaml.dump(plan, allow_unicode=True, sort_keys=False))
+    print_structured_output(plan, output_format)
 
 def set_ownership_metadata(chart_path: str,
                            release_name: str,

@@ -38,6 +38,7 @@ class MainCliTests(unittest.TestCase):
             '--kubeconfig', './kubeconfig.yaml',
             '--kube-context', 'dev',
             '--timeout', '30s',
+            '--output-format', 'json',
             '--dry-run',
             '--debug',
         ])
@@ -49,6 +50,7 @@ class MainCliTests(unittest.TestCase):
         self.assertEqual(args.kubeconfig, './kubeconfig.yaml')
         self.assertEqual(args.context, 'dev')
         self.assertEqual(args.timeout, '30s')
+        self.assertEqual(args.output_format, 'json')
         self.assertTrue(args.dry_run)
         self.assertTrue(args.debug)
 

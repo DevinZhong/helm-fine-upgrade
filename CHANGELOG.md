@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0
+
+### Added
+
+- Add `--output-format yaml|json` for structured report commands.
+- Add GitHub Actions CI for unit tests and Python compilation checks.
+- Document local development checks in the README.
+
 ## 0.8.0
 
 ### Added
