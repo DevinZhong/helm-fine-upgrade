@@ -1,5 +1,7 @@
 # helm-fine-upgrade
 
+[中文文档](./docs/README.zh-CN.md)
+
 A Helm plugin for controlled upgrades, release-state inspection, and adoption of
 existing Kubernetes resources.
 
