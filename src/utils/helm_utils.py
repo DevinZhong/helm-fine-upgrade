@@ -28,15 +28,64 @@ CLUSTER_SCOPED_KINDS = {
 def get_helm_namespace() -> str:
     return os.environ.get('HELM_NAMESPACE') or os.environ.get('NAMESPACE') or 'default'
 
+def configure_kube_options(namespace=None,
+                           kubeconfig=None,
+                           context=None,
+                           timeout=None) -> None:
+    if namespace:
+        os.environ['HELM_NAMESPACE'] = namespace
+    if kubeconfig:
+        os.environ['FINE_UPGRADE_KUBECONFIG'] = kubeconfig
+    if context:
+        os.environ['FINE_UPGRADE_KUBE_CONTEXT'] = context
+    if timeout:
+        os.environ['FINE_UPGRADE_TIMEOUT'] = timeout
+
+def get_kubeconfig():
+    return os.environ.get('FINE_UPGRADE_KUBECONFIG')
+
+def get_kube_context():
+    return os.environ.get('FINE_UPGRADE_KUBE_CONTEXT')
+
+def get_kube_timeout():
+    return os.environ.get('FINE_UPGRADE_TIMEOUT')
+
+def append_helm_global_args(cmd: list) -> list:
+    cmd = list(cmd)
+    cmd.extend(['--namespace', get_helm_namespace()])
+    kubeconfig = get_kubeconfig()
+    if kubeconfig:
+        cmd.extend(['--kubeconfig', kubeconfig])
+    context = get_kube_context()
+    if context:
+        cmd.extend(['--kube-context', context])
+    return cmd
+
+def append_kubectl_global_args(cmd: list) -> list:
+    cmd = list(cmd)
+    kubeconfig = get_kubeconfig()
+    if kubeconfig:
+        cmd.extend(['--kubeconfig', kubeconfig])
+    context = get_kube_context()
+    if context:
+        cmd.extend(['--context', context])
+    timeout = get_kube_timeout()
+    if timeout:
+        cmd.extend(['--request-timeout', timeout])
+    return cmd
+
+def build_kubectl_cmd(args: list) -> list:
+    return append_kubectl_global_args(['kubectl'] + args)
+
 def build_helm_template_cmd(release_name: str, chart_path: str, values: str = None) -> list:
     cmd = ['helm', 'template', '--is-upgrade', '--no-hooks', '--skip-crds',
            release_name, chart_path]
     if values is not None:
         cmd.extend(['-f', values])
-    return cmd
+    return append_helm_global_args(cmd)
 
 def build_helm_get_manifest_cmd(release_name: str) -> list:
-    return ['helm', 'get', 'manifest', release_name, '-n', get_helm_namespace()]
+    return append_helm_global_args(['helm', 'get', 'manifest', release_name])
 
 def get_release_manifests(release_name: str) -> list:
     """Read manifests stored in Helm release history."""
@@ -58,10 +107,10 @@ def get_api_object_spec(kind, name, namespace):
     """
     根据元信息，使用 kubectl 获取API对象的 yaml 配置
     """
-    cmd = ['kubectl', 'get', kind, name, '-o', 'yaml']
+    cmd = ['get', kind, name, '-o', 'yaml']
     if namespace is not None:
         cmd.extend(['-n', namespace])
-    cmd_output = run_cmd(cmd)
+    cmd_output = run_cmd(build_kubectl_cmd(cmd))
     if cmd_output is not None:
         return yaml.safe_load(cmd_output)
     else:
@@ -77,9 +126,9 @@ def get_all_release_api_objects(release_name) -> list:
         list: API 对象配置列表
     """
     kinds = ','.join(K8S_KINDS)
-    cmd = ['kubectl', 'get', kinds, '--all-namespaces',
+    cmd = ['get', kinds, '--all-namespaces',
            '-l', 'app.kubernetes.io/managed-by=Helm', '-o', 'yaml']
-    cmd_output = run_cmd(cmd)
+    cmd_output = run_cmd(build_kubectl_cmd(cmd))
     if cmd_output is not None:
         release_runtime_manifests = []
         manifests = yaml.safe_load(cmd_output).get('items', [])

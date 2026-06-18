@@ -1,5 +1,5 @@
 name: fine-upgrade
-version: '0.7.0'
+version: '0.8.0'
 usage: "A way for more controllable upgrading of Helm charts."
 description: |
   A way for more controllable upgrading of Helm charts.

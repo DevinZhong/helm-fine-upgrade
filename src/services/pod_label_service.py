@@ -4,13 +4,12 @@
 import yaml
 from multiprocessing import Pool
 from utils.shell_utils import run_cmd
-from utils.helm_utils import (build_helm_template_cmd, get_api_object_spec,
+from utils.helm_utils import (build_helm_template_cmd, build_kubectl_cmd,
+                              get_api_object_spec,
                               get_all_release_api_objects,
                               get_manifest_unique_key, is_manifest_match_selector,
                               manifests_list_to_dict)
 from utils.kube_ops_utils import apply_deployment, delete_deployment
-
-APPLY_CMD = ['kubectl', 'apply', '-f', '-']
 
 def rolling_update_pod_labels(chart_path: str,
                               release_name: str,
@@ -75,7 +74,9 @@ def rolling_update_pod_labels(chart_path: str,
             print(f'{namespace}:{name} 需对Pod进行滚动更新.')
             continue
         # 异步处理滚动更新逻辑
-        result = pool.apply_async(rolling_update_worker, args=(rendered_deployment_manifest, cluster_manifest, service_map, APPLY_CMD))
+        result = pool.apply_async(rolling_update_worker, args=(
+            rendered_deployment_manifest, cluster_manifest, service_map,
+            build_kubectl_cmd(['apply', '-f', '-'])))
         results.append(result)
 
     # 获取异步结果

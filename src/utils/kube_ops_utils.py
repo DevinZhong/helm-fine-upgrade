@@ -5,6 +5,7 @@ import time
 import yaml
 from typing import List
 from utils.shell_utils import run_cmd
+from utils.helm_utils import build_kubectl_cmd
 
 def apply_manifests(rendered_manifests: List[dict]) -> None:
     """execute `kubectl apply -f` for the rendered manifests.
@@ -12,14 +13,14 @@ def apply_manifests(rendered_manifests: List[dict]) -> None:
     Args:
         rendered_manifests (List[dict]): rendered manifests which will apply
     """
-    apply_cmd = ['kubectl', 'apply', '-f', '-']
+    apply_cmd = build_kubectl_cmd(['apply', '-f', '-'])
     print(run_cmd(apply_cmd, input=yaml.dump_all(rendered_manifests, allow_unicode=True)))
 
 def apply_deployment(manifest):
     name = manifest['metadata']['name']
     namespace = manifest['metadata']['namespace'] if 'namespace' in manifest['metadata'] else None
 
-    apply_cmd = ['kubectl', 'apply', '-f', '-']
+    apply_cmd = build_kubectl_cmd(['apply', '-f', '-'])
     print(run_cmd(apply_cmd, input=yaml.dump(manifest, allow_unicode=True)))
 
     try_times = 0
@@ -31,10 +32,10 @@ def apply_deployment(manifest):
     raise Exception(f'{namespace}:{name} 部署失败！')
 
 def is_deployment_ready(name, namespace=None) -> bool:
-    check_cmd = ['kubectl', 'get', 'Deployment', name, '-o', 'yaml']
+    check_cmd = ['get', 'Deployment', name, '-o', 'yaml']
     if namespace is not None:
         check_cmd.extend(['-n', namespace])
-    output = run_cmd(check_cmd)
+    output = run_cmd(build_kubectl_cmd(check_cmd))
     if output is None:
         return False
     deployment = yaml.safe_load(output)
@@ -45,7 +46,7 @@ def is_deployment_ready(name, namespace=None) -> bool:
         and status.get('availableReplicas', 0) >= desired
 
 def delete_deployment(namespace, name):
-    delete_cmd = ['kubectl', 'delete', 'Deployment', name]
+    delete_cmd = ['delete', 'Deployment', name]
     if namespace is not None:
         delete_cmd.extend(['-n', namespace])
-    print(run_cmd(delete_cmd))
+    print(run_cmd(build_kubectl_cmd(delete_cmd)))

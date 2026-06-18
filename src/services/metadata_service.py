@@ -4,8 +4,9 @@
 import yaml
 from utils.shell_utils import run_cmd
 from utils.dict_utils import parse_selector
-from utils.helm_utils import (build_helm_template_cmd, get_api_object_spec,
-                              get_all_release_api_objects, get_helm_namespace,
+from utils.helm_utils import (build_helm_template_cmd, build_kubectl_cmd,
+                              get_api_object_spec, get_all_release_api_objects,
+                              get_helm_namespace,
                               get_manifest_namespace,
                               manifests_list_to_dict, get_manifest_unique_key,
                               is_manifest_match_selector)
@@ -31,16 +32,16 @@ def build_set_ownership_commands(kind: str,
                                  release_name: str,
                                  release_namespace: str) -> list:
     cmds = [
-        ['kubectl', 'annotate', kind, name,
+        ['annotate', kind, name,
          f'meta.helm.sh/release-name={release_name}', '--overwrite'],
-        ['kubectl', 'annotate', kind, name,
+        ['annotate', kind, name,
          f'meta.helm.sh/release-namespace={release_namespace}', '--overwrite'],
-        ['kubectl', 'label', kind, name,
+        ['label', kind, name,
          'app.kubernetes.io/managed-by=Helm', '--overwrite'],
     ]
     if namespace:
         cmds = [cmd + ['-n', namespace] for cmd in cmds]
-    return cmds
+    return [build_kubectl_cmd(cmd) for cmd in cmds]
 
 def build_adopt_plan(rendered_manifests: list,
                      release_name: str,

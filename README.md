@@ -38,7 +38,7 @@ helm fine-upgrade --help
 ### Plugin Basic Command Structure
 
 ```bash
-helm fine-upgrade [ACTION] [NAME] [CHART] [flags]
+helm fine-upgrade [COMMAND] [NAME] [CHART] [flags]
 ```
 
 ### Plugin Action
@@ -62,6 +62,15 @@ helm fine-upgrade [ACTION] [NAME] [CHART] [flags]
 - `apply` uses `kubectl apply` and does not update Helm release storage. Run a
   regular Helm upgrade afterward when you need Helm release state to match the
   cluster state.
+
+### Kubernetes Connection Flags
+
+Most commands support these flags:
+
+- `--namespace`: Helm release namespace
+- `--kubeconfig`: kubeconfig file path
+- `--context`: Kubernetes context
+- `--timeout`: kubectl request timeout, for example `30s`
 
 ### Examples
 

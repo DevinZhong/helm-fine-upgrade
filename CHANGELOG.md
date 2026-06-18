@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.8.0
+
+### Added
+
+- Replace the single `action` positional parser with argparse subcommands.
+- Add Kubernetes connection flags for supported commands: `--namespace`,
+  `--kubeconfig`, `--context`, and `--timeout`.
+- Propagate Kubernetes connection flags to Helm and kubectl command execution.
+- Add explicit `--debug` handling for subcommands.
+
+### Removed
+
+- Remove the legacy shell-based command runner.
+
+### Fixed
+
+- Make CLI help work without importing command-specific optional dependencies.
+
 ## 0.7.0
 
 ### Added
