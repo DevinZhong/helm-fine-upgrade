@@ -45,6 +45,10 @@ Uninstall:
 helm plugin uninstall fine-upgrade
 ```
 
+Standalone binary packages are available from GitHub Releases starting with
+v1.1.0. They do not require Python, but they still require `helm` and `kubectl`.
+See [Binary Release](./docs/binary-release.md).
+
 ## Usage
 
 ```bash

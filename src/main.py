@@ -16,8 +16,8 @@ CURRENT_DIRECTORY = os.getcwd()
 
 init_yaml_representer()
 
-DOC_FILE = '../README.md'
-DEFAULT_CONFIG_FILE = './config.yml'
+DOC_FILE = 'README.md' if getattr(sys, 'frozen', False) else '../README.md'
+DEFAULT_CONFIG_FILE = 'config.yml' if getattr(sys, 'frozen', False) else './config.yml'
 DEFAULT_OUPUT_DIRNAME = 'helm-fine-upgrade'
 
 def print_default_config():

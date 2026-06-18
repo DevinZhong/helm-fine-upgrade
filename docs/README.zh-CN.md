@@ -41,6 +41,10 @@ cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade"
 helm plugin uninstall fine-upgrade
 ```
 
+从 v1.1.0 开始，GitHub Releases 会提供独立二进制包。二进制包不需要用户安装
+Python，但仍然需要本机已安装 `helm` 和 `kubectl`。详情见
+[Binary Release](./binary-release.md)。
+
 ## 基本用法
 
 ```bash

@@ -46,6 +46,9 @@ git tag v1.0.0
 git push origin main --tags
 ```
 
+For v1.1.0 and later, pushing a `v*.*.*` tag also triggers the GitHub Release
+workflow that builds standalone binary assets.
+
 After publishing, verify plugin installation from GitHub:
 
 ```bash

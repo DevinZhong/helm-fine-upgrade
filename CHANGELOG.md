@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0
+
+### Added
+
+- Add PyInstaller packaging configuration for standalone executables.
+- Add tag-triggered GitHub Release workflow for Linux, macOS, and Windows
+  binary assets.
+- Document binary release usage and limitations.
+
 ## 1.0.0
 
 ### Added
