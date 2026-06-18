@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1
+
+### Fixed
+
+- Use a current GitHub-hosted Intel macOS runner for `darwin-amd64`
+  release builds.
+
 ## 1.1.0
 
 ### Added
