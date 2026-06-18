@@ -1,7 +1,7 @@
 # Binary Release
 
-Starting with v1.1.0, GitHub Releases can publish standalone executables built
-with PyInstaller.
+Starting with v1.1.2, GitHub Releases publish Helm-installable binary plugin
+packages built with PyInstaller.
 
 These binaries bundle Python and the project dependencies, so users do not need
 to install Python or run `pip install -r requirements.txt`.
@@ -11,6 +11,7 @@ to install Python or run `pip install -r requirements.txt`.
 Each release asset contains:
 
 - `bin/fine-upgrade` or `bin/fine-upgrade.exe`
+- `plugin.yaml`
 - `README.md`
 - `CHANGELOG.md`
 - `LICENSE`
@@ -32,31 +33,46 @@ Linux ARM64 is not built yet because PyInstaller generally needs to build on the
 target platform. It can be added later with a native runner or an emulated build
 setup.
 
-## Usage
+## Install
 
-Download the archive for your platform from GitHub Releases, extract it, and run:
+Install the package matching your platform from GitHub Releases:
 
 ```bash
-./bin/fine-upgrade --help
-./bin/fine-upgrade plan my_release . --namespace my_namespace
+VERSION=v1.1.2
+helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
 On Windows:
 
 ```powershell
-.\bin\fine-upgrade.exe --help
+$Version = "v1.1.2"
+helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/$Version/helm-fine-upgrade-$Version-windows-amd64.tar.gz"
+```
+
+After installation:
+
+```bash
+helm fine-upgrade --help
+helm fine-upgrade plan my_release . --namespace my_namespace
 ```
 
 ## Relationship With Helm Plugin Install
 
-The normal Helm plugin installation remains supported:
+Binary release assets are the recommended installation path for end users.
+
+Source-based installation remains supported for development or unsupported
+platforms:
 
 ```bash
 helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
+cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
 ```
 
-Binary assets are currently standalone CLI packages. They do not replace the
-source-based Helm plugin installation yet.
+## Distribution Channels
 
-A future release may add a Helm install hook that automatically downloads the
-right binary for the current platform.
+The canonical download channel is GitHub Releases. The release asset URL can be
+used directly with `helm plugin install`.
+
+For discovery, the project can also be listed on Artifact Hub as a Helm plugin
+repository later. Artifact Hub improves visibility, but the release assets should
+remain the source of truth for downloadable packages.

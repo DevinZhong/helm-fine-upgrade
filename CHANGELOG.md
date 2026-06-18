@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.2
+
+### Changed
+
+- Package release assets as Helm-installable binary plugin archives.
+- Prefer binary plugin installation in user documentation.
+
 ## 1.1.1
 
 ### Fixed

@@ -25,14 +25,35 @@ Helm Release 状态检查，以及将已有 Kubernetes 资源接管到 Helm Rele
 
 ## 安装
 
+推荐使用 GitHub Releases 里的二进制 Helm 插件包安装。这个方式不需要用户安装
+Python，也不需要执行 `pip install`，但本机仍然需要安装 `helm` 和 `kubectl`。
+
+Linux amd64：
+
 ```bash
-helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
+VERSION=v1.1.2
+helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
-安装 Python 依赖：
+macOS Intel：
 
 ```bash
-cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
+VERSION=v1.1.2
+helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-darwin-amd64.tar.gz"
+```
+
+macOS Apple Silicon：
+
+```bash
+VERSION=v1.1.2
+helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-darwin-arm64.tar.gz"
+```
+
+Windows amd64：
+
+```powershell
+$Version = "v1.1.2"
+helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/$Version/helm-fine-upgrade-$Version-windows-amd64.tar.gz"
 ```
 
 卸载：
@@ -41,9 +62,14 @@ cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade"
 helm plugin uninstall fine-upgrade
 ```
 
-从 v1.1.0 开始，GitHub Releases 会提供独立二进制包。二进制包不需要用户安装
-Python，但仍然需要本机已安装 `helm` 和 `kubectl`。详情见
-[Binary Release](./binary-release.md)。
+源码安装仍然保留，适合开发者或暂时没有二进制包的平台：
+
+```bash
+helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
+cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
+```
+
+二进制包的更多说明见 [Binary Release](./binary-release.md)。
 
 ## 基本用法
 

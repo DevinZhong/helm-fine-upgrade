@@ -27,7 +27,7 @@ jobs:
             archive-ext: tar.gz
           - os: windows-latest
             asset-name: windows-amd64
-            archive-ext: zip
+            archive-ext: tar.gz
 
     steps:
       - uses: actions/checkout@v4
@@ -50,6 +50,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME}"
+          PLUGIN_VERSION="${GITHUB_REF_NAME#v}"
           PACKAGE_DIR="helm-fine-upgrade-${VERSION}-${{ matrix.asset-name }}"
           mkdir -p "${PACKAGE_DIR}/bin"
           if [[ "${{ runner.os }}" == "Windows" ]]; then
@@ -58,6 +59,27 @@ jobs:
             cp dist/fine-upgrade "${PACKAGE_DIR}/bin/fine-upgrade"
             chmod +x "${PACKAGE_DIR}/bin/fine-upgrade"
           fi
+          cat > "${PACKAGE_DIR}/plugin.yaml" <<EOF
+          name: fine-upgrade
+          version: '${PLUGIN_VERSION}'
+          usage: "A way for more controllable upgrading of Helm charts."
+          description: |
+            A Helm plugin for controlled upgrades, release-state inspection, and
+            adoption of existing Kubernetes resources.
+
+            This binary package bundles Python and project dependencies. It still
+            requires helm and kubectl to be installed on the target machine.
+
+            Run:
+
+              helm fine-upgrade --help
+          ignoreFlags: false
+          platformCommand:
+            - os: windows
+              command: '\${HELM_PLUGIN_DIR}/bin/fine-upgrade.exe'
+            - command: '\${HELM_PLUGIN_DIR}/bin/fine-upgrade'
+          EOF
+          python -c "from pathlib import Path; p=Path('${PACKAGE_DIR}')/'plugin.yaml'; p.write_text('\n'.join(line[10:] if line.startswith('          ') else line for line in p.read_text().splitlines()) + '\n')"
           cp README.md CHANGELOG.md LICENSE "${PACKAGE_DIR}/"
           cp -r docs "${PACKAGE_DIR}/docs"
           mkdir -p dist-release

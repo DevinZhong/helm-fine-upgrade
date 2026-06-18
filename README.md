@@ -29,14 +29,36 @@ plan before changing live cluster resources.
 
 ## Install
 
+Recommended: install the binary Helm plugin package from GitHub Releases. It
+does not require Python or `pip install`, but it still requires `helm` and
+`kubectl`.
+
+Linux amd64:
+
 ```bash
-helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
+VERSION=v1.1.2
+helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
-Install Python dependencies:
+macOS Intel:
 
 ```bash
-cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
+VERSION=v1.1.2
+helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-darwin-amd64.tar.gz"
+```
+
+macOS Apple Silicon:
+
+```bash
+VERSION=v1.1.2
+helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-darwin-arm64.tar.gz"
+```
+
+Windows amd64:
+
+```powershell
+$Version = "v1.1.2"
+helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/$Version/helm-fine-upgrade-$Version-windows-amd64.tar.gz"
 ```
 
 Uninstall:
@@ -45,9 +67,15 @@ Uninstall:
 helm plugin uninstall fine-upgrade
 ```
 
-Standalone binary packages are available from GitHub Releases starting with
-v1.1.0. They do not require Python, but they still require `helm` and `kubectl`.
-See [Binary Release](./docs/binary-release.md).
+Source-based installation remains available for development or for platforms
+without a binary package:
+
+```bash
+helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
+cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
+```
+
+See [Binary Release](./docs/binary-release.md) for package details.
 
 ## Usage
 
