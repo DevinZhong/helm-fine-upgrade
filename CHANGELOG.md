@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0
+
+### Added
+
+- Add `--fail-on` for structured report commands so CI jobs can fail when
+  selected summary counters are non-zero.
+
 ## 1.3.0
 
 ### Added

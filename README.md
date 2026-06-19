@@ -164,9 +164,33 @@ Most commands support:
 - `--config`: plugin config file path.
 - `--selector` / `-l`: label selector used to scope Deployment-oriented flows.
 - `--output-format`: `yaml` or `json` for structured report commands.
+- `--fail-on`: comma-separated summary fields that make report commands exit
+  with code `2` when any selected counter is non-zero.
 - `--dry-run`: preview supported mutating actions.
 - `--yes`: confirm commands that modify cluster resources or local files.
 - `--debug`: print Helm and kubectl commands.
+
+## CI Gate Example
+
+Fail a pipeline when an upgrade plan contains adoption, orphaned resources, or
+immutable-field risk:
+
+```bash
+helm fine-upgrade plan my_release . \
+    --namespace my_release_namespace \
+    --values ./my-values.yaml \
+    --output-format json \
+    --fail-on adopt,orphan,immutable_risk
+```
+
+Fail when release storage and runtime state have drifted:
+
+```bash
+helm fine-upgrade state-check my_release . \
+    --namespace my_release_namespace \
+    --output-format json \
+    --fail-on runtime_missing,runtime_extra,runtime_drift
+```
 
 ## Safety Notes
 

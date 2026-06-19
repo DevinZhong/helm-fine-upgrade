@@ -52,6 +52,8 @@ def add_common_options(parser):
                         help='打印执行的 Helm/kubectl 命令')
     parser.add_argument('--output-format', choices=SUPPORTED_OUTPUT_FORMATS,
                         default='yaml', help='结构化输出格式')
+    parser.add_argument('--fail-on', default='', type=str,
+                        help='逗号分隔的 summary 字段；任一字段非 0 时返回退出码 2')
     parser.add_argument('-l', '--selector', default='', type=str,
                         help='标签选择器，用于过滤 Deployment，控制影响范围')
 
@@ -152,14 +154,16 @@ def dispatch(args):
              chart_path=args.chart,
              values=args.values,
              config_path=args.config,
-             output_format=args.output_format)
+             output_format=args.output_format,
+             fail_on=args.fail_on)
     elif args.action == 'adopt-plan':
         from services.metadata_service import adopt_plan
         adopt_plan(chart_path=args.chart,
              release_name=args.release_name,
              values=args.values,
              selector=args.selector,
-             output_format=args.output_format)
+             output_format=args.output_format,
+             fail_on=args.fail_on)
     elif args.action == 'plan':
         from services.helm_service import plan_upgrade
         plan_upgrade(chart_path=args.chart,
@@ -167,7 +171,8 @@ def dispatch(args):
              values=args.values,
              config_path=args.config,
              selector=args.selector,
-             output_format=args.output_format)
+             output_format=args.output_format,
+             fail_on=args.fail_on)
     elif args.action == 'apply':
         from services.helm_service import apply_upgrade
         apply_upgrade(chart_path=args.chart,

@@ -1,13 +1,15 @@
 import os
 import sys
 import unittest
+from unittest.mock import mock_open, patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
 from utils.dict_utils import parse_selector, remove_ignore_fields, set_value
 from utils.manifest_utils import find_and_merge_related_rendered_manifests_of_deployments
 from services.helm_service import (build_state_check, build_upgrade_plan,
-                                   detect_immutable_field_changes)
+                                   detect_immutable_field_changes,
+                                   plan_upgrade)
 
 
 class HelmServiceSupportTests(unittest.TestCase):
@@ -315,6 +317,35 @@ class HelmServiceSupportTests(unittest.TestCase):
         self.assertEqual(
             result['chart_consistency']['missing_from_chart'][0]['key'],
             'ConfigMap:demo:delete-from-chart')
+
+    @patch('services.helm_service.print_structured_output')
+    @patch('services.helm_service.get_all_release_api_objects')
+    @patch('services.helm_service.render_chart_manifests')
+    def test_plan_upgrade_fail_on_exits_after_printing_report(
+            self, render_chart_manifests, get_all_release_api_objects,
+            print_structured_output):
+        render_chart_manifests.return_value = [
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'changed', 'namespace': 'demo'},
+                'data': {'value': 'new'},
+            },
+        ]
+        get_all_release_api_objects.return_value = [
+            {
+                'kind': 'ConfigMap',
+                'metadata': {'name': 'changed', 'namespace': 'demo'},
+                'data': {'value': 'old'},
+            },
+        ]
+
+        with patch('builtins.open', mock_open(read_data='ignore_fields: {}\n')):
+            with self.assertRaises(SystemExit) as context:
+                plan_upgrade('./chart', 'release', None, './config.yml', '',
+                             output_format='json', fail_on='update')
+
+        self.assertEqual(context.exception.code, 2)
+        print_structured_output.assert_called_once()
 
 
 if __name__ == '__main__':

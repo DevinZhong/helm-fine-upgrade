@@ -39,6 +39,7 @@ class MainCliTests(unittest.TestCase):
             '--kube-context', 'dev',
             '--timeout', '30s',
             '--output-format', 'json',
+            '--fail-on', 'immutable_risk,adopt',
             '--dry-run',
             '--debug',
         ])
@@ -51,6 +52,7 @@ class MainCliTests(unittest.TestCase):
         self.assertEqual(args.context, 'dev')
         self.assertEqual(args.timeout, '30s')
         self.assertEqual(args.output_format, 'json')
+        self.assertEqual(args.fail_on, 'immutable_risk,adopt')
         self.assertTrue(args.dry_run)
         self.assertTrue(args.debug)
 

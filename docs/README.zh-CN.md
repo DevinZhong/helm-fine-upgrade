@@ -157,9 +157,32 @@ helm fine-upgrade plan --help
 - `--config`：插件配置文件路径。
 - `--selector` / `-l`：用于缩小 Deployment 相关流程影响范围的标签选择器。
 - `--output-format`：结构化输出格式，支持 `yaml` 和 `json`。
+- `--fail-on`：逗号分隔的 summary 字段；只读报告命令中任一指定计数非 0 时
+  返回退出码 `2`，方便 CI 拦截。
 - `--dry-run`：预览支持 dry-run 的变更命令。
 - `--yes`：确认执行会修改集群资源或本地文件的命令。
 - `--debug`：打印执行的 Helm/kubectl 命令。
+
+## CI 拦截示例
+
+当升级计划里出现接管、孤儿资源或不可变字段风险时，让流水线失败：
+
+```bash
+helm fine-upgrade plan my_release . \
+    --namespace my_release_namespace \
+    --values ./my-values.yaml \
+    --output-format json \
+    --fail-on adopt,orphan,immutable_risk
+```
+
+当 Helm release storage 和集群运行态发生漂移时，让流水线失败：
+
+```bash
+helm fine-upgrade state-check my_release . \
+    --namespace my_release_namespace \
+    --output-format json \
+    --fail-on runtime_missing,runtime_extra,runtime_drift
+```
 
 ## 安全说明
 

@@ -8,7 +8,11 @@ import yaml
 from utils.yaml_utils import init_yaml_representer
 from utils.shell_utils import run_cmd
 from utils.dict_utils import remove_ignore_fields, parse_selector
-from utils.output_utils import print_status, print_structured_output
+from utils.output_utils import (
+    exit_if_fail_on_triggered,
+    print_status,
+    print_structured_output,
+)
 from utils.helm_utils import (
     build_helm_template_cmd,
     get_api_object_spec,
@@ -201,7 +205,8 @@ def plan_upgrade(chart_path: str,
                  values: str,
                  config_path: str,
                  selector: str,
-                 output_format: str = 'yaml') -> None:
+                 output_format: str = 'yaml',
+                 fail_on: str = '') -> None:
     with open(config_path, 'r', encoding='utf-8') as config_file:
         config = yaml.safe_load(config_file)
 
@@ -212,6 +217,7 @@ def plan_upgrade(chart_path: str,
     plan = build_upgrade_plan(rendered_manifests, cluster_manifests, config,
                               selector=selector)
     print_structured_output(plan, output_format)
+    exit_if_fail_on_triggered(plan, fail_on)
 
 def manifest_info(manifest: dict, status: str) -> dict:
     return {
@@ -304,7 +310,8 @@ def state_check(release_name: str,
                 chart_path: str,
                 values: str,
                 config_path: str,
-                output_format: str = 'yaml') -> None:
+                output_format: str = 'yaml',
+                fail_on: str = '') -> None:
     with open(config_path, 'r', encoding='utf-8') as config_file:
         config = yaml.safe_load(config_file)
 
@@ -321,6 +328,7 @@ def state_check(release_name: str,
     result = build_state_check(release_manifests, runtime_manifests,
                                chart_manifests, config)
     print_structured_output(result, output_format)
+    exit_if_fail_on_triggered(result, fail_on)
 
 def diff(chart_path: str,
          release_name: str,
