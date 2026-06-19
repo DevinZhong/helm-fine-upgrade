@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.0
+
+### Added
+
+- Add a `--yes` confirmation gate for commands that modify cluster resources or
+  local files.
+
+### Changed
+
+- Mutating commands now require either `--dry-run` or `--yes`.
+
 ## 1.2.0
 
 ### Added

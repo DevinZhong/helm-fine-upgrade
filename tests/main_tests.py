@@ -4,7 +4,7 @@ import unittest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
-from main import build_parser, configure_runtime_options
+from main import build_parser, configure_runtime_options, validate_safety_options
 
 
 class MainCliTests(unittest.TestCase):
@@ -73,6 +73,39 @@ class MainCliTests(unittest.TestCase):
         self.assertEqual(os.environ['FINE_UPGRADE_TIMEOUT'], '30s')
         self.assertEqual(os.environ['DRY_RUN_FLAG'], '1')
         self.assertEqual(os.environ['HELM_DEBUG'], '1')
+
+    def test_mutating_command_requires_yes_without_dry_run(self):
+        args = build_parser().parse_args([
+            'apply', 'release', './chart',
+        ])
+
+        with self.assertRaises(SystemExit) as context:
+            validate_safety_options(args)
+
+        self.assertIn('pass --yes', str(context.exception))
+
+    def test_mutating_command_allows_dry_run_without_yes(self):
+        args = build_parser().parse_args([
+            'update-ownership-metadata', 'release', './chart',
+            '--dry-run',
+        ])
+
+        validate_safety_options(args)
+
+    def test_mutating_command_allows_explicit_yes(self):
+        args = build_parser().parse_args([
+            'rolling-update-pod-labels', 'release', './chart',
+            '--yes',
+        ])
+
+        validate_safety_options(args)
+
+    def test_read_only_command_does_not_require_yes(self):
+        args = build_parser().parse_args([
+            'plan', 'release', './chart',
+        ])
+
+        validate_safety_options(args)
 
 
 if __name__ == '__main__':

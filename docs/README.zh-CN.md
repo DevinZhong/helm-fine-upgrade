@@ -158,13 +158,16 @@ helm fine-upgrade plan --help
 - `--selector` / `-l`：用于缩小 Deployment 相关流程影响范围的标签选择器。
 - `--output-format`：结构化输出格式，支持 `yaml` 和 `json`。
 - `--dry-run`：预览支持 dry-run 的变更命令。
+- `--yes`：确认执行会修改集群资源或本地文件的命令。
 - `--debug`：打印执行的 Helm/kubectl 命令。
 
 ## 安全说明
 
 - 在执行会修改集群的命令前，优先使用 `state-check`、`plan`、`adopt-plan` 和
   `generate-comparison-file`。
+- 会修改集群或本地文件的命令默认需要 `--yes`；使用 `--dry-run` 时不需要。
 - `apply`、`update-ownership-metadata`、`rolling-update-pod-labels` 会修改集群资源。
+- `update-values-image-version` 会修改 `--values` 指定的 values 文件。
 - `apply` 使用 `kubectl apply`，不会更新 Helm release storage。如果需要 Helm
   记录和集群状态一致，后续应执行常规 `helm upgrade`。
 - `rolling-update-pod-labels` 适合特殊的 selector/label 迁移场景。生产环境使用前，

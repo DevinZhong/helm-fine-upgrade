@@ -19,6 +19,12 @@ init_yaml_representer()
 DOC_FILE = 'README.md' if getattr(sys, 'frozen', False) else '../README.md'
 DEFAULT_CONFIG_FILE = 'config.yml' if getattr(sys, 'frozen', False) else './config.yml'
 DEFAULT_OUPUT_DIRNAME = 'helm-fine-upgrade'
+MUTATING_ACTIONS = {
+    'apply',
+    'update-values-image-version',
+    'update-ownership-metadata',
+    'rolling-update-pod-labels',
+}
 
 def print_default_config():
     """打印默认配置文件，类似 helm show values，可以使用重定向另行保存"""
@@ -40,6 +46,8 @@ def add_common_options(parser):
                         help='自定义脚本配置文件路径')
     parser.add_argument('--dry-run', action='store_true',
                         help='仅模拟运行，不实际变更集群')
+    parser.add_argument('--yes', action='store_true',
+                        help='确认执行会修改集群或本地文件的命令')
     parser.add_argument('--debug', action='store_true',
                         help='打印执行的 Helm/kubectl 命令')
     parser.add_argument('--output-format', choices=SUPPORTED_OUTPUT_FORMATS,
@@ -125,8 +133,17 @@ def configure_runtime_options(args):
     if getattr(args, 'debug', False):
         os.environ['HELM_DEBUG'] = '1'
 
+def validate_safety_options(args):
+    if (getattr(args, 'action', None) in MUTATING_ACTIONS and
+            not getattr(args, 'dry_run', False) and
+            not getattr(args, 'yes', False)):
+        raise SystemExit(
+            f"Command '{args.action}' may modify cluster resources or local files. "
+            "Run with --dry-run first, or pass --yes to confirm.")
+
 def dispatch(args):
     configure_runtime_options(args)
+    validate_safety_options(args)
     if args.action == 'show-default-config':
         print_default_config()
     elif args.action == 'state-check':

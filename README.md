@@ -165,14 +165,17 @@ Most commands support:
 - `--selector` / `-l`: label selector used to scope Deployment-oriented flows.
 - `--output-format`: `yaml` or `json` for structured report commands.
 - `--dry-run`: preview supported mutating actions.
+- `--yes`: confirm commands that modify cluster resources or local files.
 - `--debug`: print Helm and kubectl commands.
 
 ## Safety Notes
 
 - Prefer `state-check`, `plan`, `adopt-plan`, and `generate-comparison-file`
   before running mutating commands.
+- Mutating commands require `--yes` unless `--dry-run` is used.
 - `apply`, `update-ownership-metadata`, and `rolling-update-pod-labels` may
   change live cluster resources.
+- `update-values-image-version` may modify the values file passed by `--values`.
 - `apply` uses `kubectl apply` and does not update Helm release storage. Run a
   regular `helm upgrade` afterward when Helm release state must match runtime
   state.
