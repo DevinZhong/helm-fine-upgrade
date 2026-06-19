@@ -71,6 +71,10 @@ cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade"
 
 二进制包的更多说明见 [Binary Release](./binary-release.md)。
 
+也可以通过 Artifact Hub 发现本插件：
+
+https://artifacthub.io/
+
 ## 基本用法
 
 ```bash

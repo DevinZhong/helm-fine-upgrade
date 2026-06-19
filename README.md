@@ -77,6 +77,10 @@ cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade"
 
 See [Binary Release](./docs/binary-release.md) for package details.
 
+The plugin is also listed on Artifact Hub for discovery:
+
+https://artifacthub.io/
+
 ## Usage
 
 ```bash
