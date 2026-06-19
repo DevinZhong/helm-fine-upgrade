@@ -1,5 +1,7 @@
 # helm-fine-upgrade
 
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/helm-fine-upgrade)](https://artifacthub.io/packages/search?repo=helm-fine-upgrade)
+
 [中文文档](./docs/README.zh-CN.md)
 
 A Helm plugin for controlled upgrades, release-state inspection, and adoption of

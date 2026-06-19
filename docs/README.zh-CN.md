@@ -1,5 +1,7 @@
 # helm-fine-upgrade 中文文档
 
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/helm-fine-upgrade)](https://artifacthub.io/packages/search?repo=helm-fine-upgrade)
+
 [Back to README](../README.md)
 
 `helm-fine-upgrade` 是一个 Helm 插件，用于更可控地处理 Helm Chart 升级、
