@@ -27,36 +27,15 @@ Helm Release 状态检查，以及将已有 Kubernetes 资源接管到 Helm Rele
 
 ## 安装
 
-推荐使用 GitHub Releases 里的二进制 Helm 插件包安装。这个方式不需要用户安装
-Python，也不需要执行 `pip install`，但本机仍然需要安装 `helm` 和 `kubectl`。
-
-Linux amd64：
+推荐安装方式：
 
 ```bash
-VERSION=v1.1.2
-helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
+helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
 ```
 
-macOS Intel：
-
-```bash
-VERSION=v1.1.2
-helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-darwin-amd64.tar.gz"
-```
-
-macOS Apple Silicon：
-
-```bash
-VERSION=v1.1.2
-helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-darwin-arm64.tar.gz"
-```
-
-Windows amd64：
-
-```powershell
-$Version = "v1.1.2"
-helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/$Version/helm-fine-upgrade-$Version-windows-amd64.tar.gz"
-```
+安装 hook 会自动从 GitHub Releases 下载当前平台对应的独立二进制包。这个方式不需要
+用户安装 Python，也不需要执行 `pip install`，但本机仍然需要安装 `helm` 和
+`kubectl`。
 
 卸载：
 
@@ -64,11 +43,26 @@ helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/do
 helm plugin uninstall fine-upgrade
 ```
 
-源码安装仍然保留，适合开发者或暂时没有二进制包的平台：
+源码模式仍然保留，适合开发者或暂时没有二进制包的平台：
 
 ```bash
-helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
+HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL=1 helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
 cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
+```
+
+Windows 源码模式：
+
+```powershell
+$env:HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL = "1"
+helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
+Remove-Item Env:\HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL
+```
+
+也可以手动指定某个平台的 release 包安装：
+
+```bash
+VERSION=v1.2.0
+helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
 二进制包的更多说明见 [Binary Release](./binary-release.md)。

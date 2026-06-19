@@ -1,7 +1,8 @@
 # Binary Release
 
-Starting with v1.1.2, GitHub Releases publish Helm-installable binary plugin
-packages built with PyInstaller.
+Starting with v1.2.0, installing the source repository downloads the matching
+Helm-installable binary plugin package from GitHub Releases. The release assets
+are built with PyInstaller.
 
 These binaries bundle Python and the project dependencies, so users do not need
 to install Python or run `pip install -r requirements.txt`.
@@ -35,17 +36,26 @@ setup.
 
 ## Install
 
-Install the package matching your platform from GitHub Releases:
+Recommended:
 
 ```bash
-VERSION=v1.1.2
+helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
+```
+
+The install hook detects the current platform and downloads the matching release
+asset.
+
+Manual installation from a release asset is also supported:
+
+```bash
+VERSION=v1.2.0
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
 On Windows:
 
 ```powershell
-$Version = "v1.1.2"
+$Version = "v1.2.0"
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/$Version/helm-fine-upgrade-$Version-windows-amd64.tar.gz"
 ```
 
@@ -58,13 +68,20 @@ helm fine-upgrade plan my_release . --namespace my_namespace
 
 ## Relationship With Helm Plugin Install
 
-Binary release assets are the recommended installation path for end users.
-
-Source-based installation remains supported for development or unsupported
-platforms:
+The normal Helm plugin install command is the recommended installation path for
+end users:
 
 ```bash
 helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
+```
+
+It installs the source repository first, then the install hook downloads the
+matching binary package into `bin/`.
+
+Source mode remains supported for development or unsupported platforms:
+
+```bash
+HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL=1 helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
 cd "$(helm env | grep HELM_PLUGINS | awk -F '"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
 ```
 

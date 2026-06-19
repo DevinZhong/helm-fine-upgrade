@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.0
+
+### Added
+
+- Add Helm install and update hooks that download the matching GitHub Release
+  binary for the current platform.
+- Add cross-platform runtime wrappers that prefer the downloaded binary and
+  fall back to Python source mode for development.
+
+### Changed
+
+- Make `helm plugin install https://github.com/DevinZhong/helm-fine-upgrade`
+  the recommended installation flow.
+
 ## 1.1.2
 
 ### Changed

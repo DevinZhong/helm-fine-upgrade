@@ -1,18 +1,54 @@
 name: fine-upgrade
-version: '1.1.2'
+version: '1.2.0'
 usage: "A way for more controllable upgrading of Helm charts."
 description: |
-  A way for more controllable upgrading of Helm charts.
+  A Helm plugin for controlled upgrades, release-state inspection, and adoption
+  of existing Kubernetes resources.
 
-  Before using this plugin, please install the Python environment first.
+  Installing from the source repository downloads the matching standalone binary
+  package from GitHub Releases for the current platform. The binary bundles
+  Python and project dependencies, but still requires helm and kubectl.
 
-  Use the following command to initialize the plugin dependencies:
+  Developers can skip binary download with:
 
-    cd "$(helm env | grep HELM_PLUGINS | awk -F'"' '{print $2}')/helm-fine-upgrade" && pip install -r requirements.txt && cd -
+    HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL=1 helm plugin install <path-or-url>
 
-  Execute the following command to view the complete usage instructions:
+  Then install Python dependencies manually before running the plugin.
 
-    helm fine-upgrade --help
+  Run: helm fine-upgrade --help
 
 ignoreFlags: false
-command: "$HELM_PLUGIN_DIR/src/main.py"
+platformCommand:
+  - os: windows
+    command: powershell.exe
+    args:
+      - -NoProfile
+      - -ExecutionPolicy
+      - Bypass
+      - -File
+      - ${HELM_PLUGIN_DIR}\scripts\run.ps1
+  - command: ${HELM_PLUGIN_DIR}/scripts/run.sh
+platformHooks:
+  install:
+    - os: windows
+      command: powershell.exe
+      args:
+        - -NoProfile
+        - -ExecutionPolicy
+        - Bypass
+        - -File
+        - ${HELM_PLUGIN_DIR}\scripts\install.ps1
+    - command: ${HELM_PLUGIN_DIR}/scripts/install.sh
+  update:
+    - os: windows
+      command: powershell.exe
+      args:
+        - -NoProfile
+        - -ExecutionPolicy
+        - Bypass
+        - -File
+        - ${HELM_PLUGIN_DIR}\scripts\install.ps1
+        - -Update
+    - command: ${HELM_PLUGIN_DIR}/scripts/install.sh
+      args:
+        - --update
