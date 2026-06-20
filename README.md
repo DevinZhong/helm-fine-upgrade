@@ -45,6 +45,11 @@ Recommended:
 ```bash
 helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
 ```
+Helm 4 currently requires skipping plugin source verification for GitHub URL installs:
+
+```bash
+helm plugin install https://github.com/DevinZhong/helm-fine-upgrade --verify=false
+```
 
 The install hook downloads the matching standalone binary package from GitHub
 Releases for your platform. It does not require Python or `pip install`, but it

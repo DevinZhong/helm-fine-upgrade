@@ -41,6 +41,11 @@ Recommended:
 ```bash
 helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
 ```
+For Helm 4, use:
+
+```bash
+helm plugin install https://github.com/DevinZhong/helm-fine-upgrade --verify=false
+```
 
 The install hook detects the current platform and downloads the matching release
 asset.

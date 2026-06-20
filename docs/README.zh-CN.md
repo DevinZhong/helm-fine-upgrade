@@ -41,6 +41,11 @@ Helm Release 状态检查，以及将已有 Kubernetes 资源接管到 Helm Rele
 ```bash
 helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
 ```
+Helm 4 从 GitHub URL 安装插件时，目前需要跳过插件来源验证：
+
+```bash
+helm plugin install https://github.com/DevinZhong/helm-fine-upgrade --verify=false
+```
 
 安装 hook 会自动从 GitHub Releases 下载当前平台对应的独立二进制包。这个方式不需要
 用户安装 Python，也不需要执行 `pip install`，但本机仍然需要安装 `helm` 和
