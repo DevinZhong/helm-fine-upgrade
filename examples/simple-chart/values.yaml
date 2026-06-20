@@ -1,0 +1,12 @@
+replicaCount: 2
+
+image:
+  repository: nginx
+  tag: "1.25"
+
+service:
+  port: 80
+
+labels:
+  app: fine-upgrade-example
+  tier: web

@@ -29,6 +29,15 @@ This project does not replace Helm, GitOps controllers, or `helm diff`. It is a
 companion tool for messy migration and upgrade situations where you need a clear
 plan before changing live cluster resources.
 
+## Start Here
+
+- [Use Cases](./docs/use-cases.md): choose the right workflow for upgrade risk,
+  runtime drift, resource adoption, and selector migration.
+- [Example Chart](./examples/simple-chart): a small chart for trying `plan`,
+  `state-check`, `adopt-plan`, and `--fail-on` locally.
+- [GitHub Actions Example](./examples/ci/github-actions.yml): a CI gate that
+  blocks risky Helm upgrades before deployment.
+
 ## Install
 
 Recommended:
@@ -65,7 +74,7 @@ Remove-Item Env:\HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL
 Manual installation from a release asset is also supported:
 
 ```bash
-VERSION=v1.2.0
+VERSION=v1.5.0
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0
+
+### Added
+
+- Add use-case guides for upgrade planning, runtime drift checks, resource
+  adoption, and selector migration.
+- Add an example Helm chart and GitHub Actions CI gate workflow.
+
 ## 1.4.0
 
 ### Added

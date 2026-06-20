@@ -25,6 +25,15 @@ Helm Release 状态检查，以及将已有 Kubernetes 资源接管到 Helm Rele
 它不是 Helm、GitOps 控制器或 `helm diff` 的替代品，而是一个辅助工具，重点解决
 存量系统迁移、接管、漂移检查和精细化升级中的可控性问题。
 
+## 从这里开始
+
+- [使用场景](./use-cases.zh-CN.md)：按升级风险、运行态漂移、资源接管和 selector
+  迁移选择合适工作流。
+- [示例 Chart](../examples/simple-chart)：用于本地尝试 `plan`、`state-check`、
+  `adopt-plan` 和 `--fail-on`。
+- [GitHub Actions 示例](../examples/ci/github-actions.yml)：在部署前用 CI 拦截高风险
+  Helm 升级。
+
 ## 安装
 
 推荐安装方式：
@@ -61,7 +70,7 @@ Remove-Item Env:\HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL
 也可以手动指定某个平台的 release 包安装：
 
 ```bash
-VERSION=v1.2.0
+VERSION=v1.5.0
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 

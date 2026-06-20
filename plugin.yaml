@@ -1,5 +1,5 @@
 name: fine-upgrade
-version: '1.4.0'
+version: '1.5.0'
 usage: "A way for more controllable upgrading of Helm charts."
 description: |
   A Helm plugin for controlled upgrades, release-state inspection, and adoption

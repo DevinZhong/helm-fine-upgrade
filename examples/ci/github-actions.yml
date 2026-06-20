@@ -1,0 +1,33 @@
+name: Helm Upgrade Risk Check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  fine-upgrade-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install helm-fine-upgrade
+        run: helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
+
+      - name: Check upgrade risk
+        run: |
+          helm fine-upgrade plan my_release ./examples/simple-chart \
+            --namespace my_namespace \
+            --values ./examples/simple-chart/values.yaml \
+            --output-format json \
+            --fail-on adopt,orphan,immutable_risk
+
+      - name: Check runtime drift
+        run: |
+          helm fine-upgrade state-check my_release ./examples/simple-chart \
+            --namespace my_namespace \
+            --values ./examples/simple-chart/values.yaml \
+            --output-format json \
+            --fail-on runtime_missing,runtime_extra,runtime_drift

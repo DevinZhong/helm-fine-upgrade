@@ -1,0 +1,6 @@
+apiVersion: v2
+name: fine-upgrade-example
+description: Example chart for helm-fine-upgrade workflows
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

@@ -11,7 +11,7 @@ class PluginMetadataTests(unittest.TestCase):
     def test_source_plugin_uses_binary_install_hooks_and_wrappers(self):
         plugin = yaml.safe_load((ROOT_DIR / "plugin.yaml").read_text())
 
-        self.assertEqual("1.4.0", plugin["version"])
+        self.assertEqual("1.5.0", plugin["version"])
         self.assertNotIn("command", plugin)
 
         commands = plugin["platformCommand"]
