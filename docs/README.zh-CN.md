@@ -33,6 +33,8 @@ Helm Release 状态检查，以及将已有 Kubernetes 资源接管到 Helm Rele
   `adopt-plan` 和 `--fail-on`。
 - [GitHub Actions 示例](../examples/ci/github-actions.yml)：在部署前用 CI 拦截高风险
   Helm 升级。
+- [安装与故障排查](./installation-troubleshooting.zh-CN.md)：Helm 3/4、二进制下载和
+  平台相关安装说明。
 
 ## 安装
 
@@ -75,11 +77,11 @@ Remove-Item Env:\HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL
 也可以手动指定某个平台的 release 包安装：
 
 ```bash
-VERSION=v1.5.0
+VERSION=v1.6.0
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
-二进制包的更多说明见 [Binary Release](./binary-release.md)。
+二进制包的更多说明见 [Binary Release](./binary-release.md)，安装问题见 [安装与故障排查](./installation-troubleshooting.zh-CN.md)。
 
 也可以通过 Artifact Hub 发现本插件：
 

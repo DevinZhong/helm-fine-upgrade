@@ -37,6 +37,8 @@ plan before changing live cluster resources.
   `state-check`, `adopt-plan`, and `--fail-on` locally.
 - [GitHub Actions Example](./examples/ci/github-actions.yml): a CI gate that
   blocks risky Helm upgrades before deployment.
+- [Installation Troubleshooting](./docs/installation-troubleshooting.md): Helm 3/4,
+  binary download, and platform-specific install notes.
 
 ## Install
 
@@ -79,11 +81,11 @@ Remove-Item Env:\HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL
 Manual installation from a release asset is also supported:
 
 ```bash
-VERSION=v1.5.0
+VERSION=v1.6.0
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
-See [Binary Release](./docs/binary-release.md) for package details.
+See [Binary Release](./docs/binary-release.md) and [Installation Troubleshooting](./docs/installation-troubleshooting.md) for package details and install notes.
 
 The plugin is also listed on Artifact Hub for discovery:
 

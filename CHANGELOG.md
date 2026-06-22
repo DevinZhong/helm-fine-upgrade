@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0
+
+### Added
+
+- Add Helm 3/4 installation and troubleshooting documentation.
+- Document common install failures, including Helm 4 verification, Windows local
+  symlink privileges, binary download failures, and missing external commands.
+
 ## 1.5.0
 
 ### Added
