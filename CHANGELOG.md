@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0
+
+### Added
+
+- Add a `doctor` command that reports plugin version, runtime mode, install
+  paths, and external dependency availability.
+
 ## 1.6.0
 
 ### Added

@@ -81,7 +81,7 @@ Remove-Item Env:\HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL
 Manual installation from a release asset is also supported:
 
 ```bash
-VERSION=v1.6.0
+VERSION=v1.7.0
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
@@ -102,6 +102,7 @@ View help:
 ```bash
 helm fine-upgrade --help
 helm fine-upgrade plan --help
+helm fine-upgrade doctor --output-format json
 ```
 
 ## Commands
@@ -116,6 +117,8 @@ Read-only commands:
   target release.
 - `generate-comparison-file`: Write simplified rendered and runtime manifests
   for manual diffing.
+- `doctor`: Report plugin version, runtime mode, install paths, and dependency
+  availability.
 - `show-default-config`: Print the default ignore-field and image-field config.
 
 Mutating commands:
@@ -206,6 +209,16 @@ helm fine-upgrade state-check my_release . \
     --namespace my_release_namespace \
     --output-format json \
     --fail-on runtime_missing,runtime_extra,runtime_drift
+```
+
+
+## Doctor Example
+
+Collect environment details before opening an issue or debugging an install:
+
+```bash
+helm fine-upgrade doctor
+helm fine-upgrade doctor --output-format json
 ```
 
 ## Safety Notes

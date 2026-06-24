@@ -22,6 +22,18 @@ not currently published with Helm plugin provenance metadata, so Helm 4 users
 need `--verify=false`. This does not disable the plugin's own binary download
 logic; it only skips Helm's plugin source verification step.
 
+## Doctor First
+
+Before debugging an install or runtime issue, collect a structured diagnostic
+report:
+
+```bash
+helm fine-upgrade doctor
+helm fine-upgrade doctor --output-format json
+```
+
+The report includes plugin version, runtime mode, install paths, and whether
+`helm` and `kubectl` are available in `PATH`.
 ## Requirements
 
 - `helm` must be installed and available in `PATH`.
@@ -130,13 +142,13 @@ security policy or install from the release asset manually.
 Manual release asset installation avoids the source install hook:
 
 ```bash
-VERSION=v1.6.0
+VERSION=v1.7.0
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
 Windows:
 
 ```powershell
-$Version = "v1.6.0"
+$Version = "v1.7.0"
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/$Version/helm-fine-upgrade-$Version-windows-amd64.tar.gz"
 ```

@@ -74,6 +74,13 @@ def build_parser():
     subparsers = parser.add_subparsers(dest='action', required=True)
 
     subparsers.add_parser('show-default-config', help='打印默认插件配置')
+    doctor_parser = subparsers.add_parser(
+        'doctor',
+        help='检查插件安装、运行模式以及外部依赖')
+    doctor_parser.add_argument('--output-format', choices=SUPPORTED_OUTPUT_FORMATS,
+                               default='yaml', help='结构化输出格式')
+    doctor_parser.add_argument('--debug', action='store_true',
+                               help='打印执行的 Helm/kubectl 命令')
 
     state_check_parser = subparsers.add_parser(
         'state-check',
@@ -148,6 +155,9 @@ def dispatch(args):
     validate_safety_options(args)
     if args.action == 'show-default-config':
         print_default_config()
+    elif args.action == 'doctor':
+        from services.diagnostics_service import doctor
+        doctor(output_format=args.output_format)
     elif args.action == 'state-check':
         from services.helm_service import state_check
         state_check(release_name=args.release_name,

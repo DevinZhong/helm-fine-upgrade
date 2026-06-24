@@ -56,6 +56,17 @@ class MainCliTests(unittest.TestCase):
         self.assertTrue(args.dry_run)
         self.assertTrue(args.debug)
 
+    def test_doctor_subcommand_supports_structured_output(self):
+        args = build_parser().parse_args([
+            'doctor',
+            '--output-format', 'json',
+            '--debug',
+        ])
+
+        self.assertEqual(args.action, 'doctor')
+        self.assertEqual(args.output_format, 'json')
+        self.assertTrue(args.debug)
+
     def test_configure_runtime_options_sets_environment(self):
         args = build_parser().parse_args([
             'apply', 'release', './chart',

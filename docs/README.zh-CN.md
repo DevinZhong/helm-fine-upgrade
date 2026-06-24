@@ -77,7 +77,7 @@ Remove-Item Env:\HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL
 也可以手动指定某个平台的 release 包安装：
 
 ```bash
-VERSION=v1.6.0
+VERSION=v1.7.0
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
@@ -98,6 +98,7 @@ helm fine-upgrade [COMMAND] [NAME] [CHART] [flags]
 ```bash
 helm fine-upgrade --help
 helm fine-upgrade plan --help
+helm fine-upgrade doctor --output-format json
 ```
 
 ## 命令说明
@@ -110,6 +111,7 @@ helm fine-upgrade plan --help
 - `adopt-plan`：分析集群已有资源是否可以被目标 Release 接管。
 - `generate-comparison-file`：生成简化后的 rendered/runtime manifest 文件，方便
   人工比对。
+- `doctor`：输出插件版本、运行模式、安装路径和依赖可用性。
 - `show-default-config`：打印默认配置。
 
 会修改文件或集群的命令：
@@ -198,6 +200,16 @@ helm fine-upgrade state-check my_release . \
     --namespace my_release_namespace \
     --output-format json \
     --fail-on runtime_missing,runtime_extra,runtime_drift
+```
+
+
+## Doctor 示例
+
+排查安装或运行问题时，先收集当前环境信息：
+
+```bash
+helm fine-upgrade doctor
+helm fine-upgrade doctor --output-format json
 ```
 
 ## 安全说明
