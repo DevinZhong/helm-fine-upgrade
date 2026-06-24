@@ -34,6 +34,7 @@ helm fine-upgrade doctor --output-format json
 
 The report includes plugin version, runtime mode, install paths, and whether
 `helm` and `kubectl` are available in `PATH`.
+
 ## Requirements
 
 - `helm` must be installed and available in `PATH`.
@@ -102,7 +103,7 @@ symlink ... A required privilege is not held by the client
 
 This can happen when installing from a local directory on Windows because Helm's
 local development install mode may create a symlink. Prefer installing from the
-GitHub URL, or enable Windows Developer Mode / run a shell with the required
+GitHub URL, or enable Windows Developer Mode or run a shell with the required
 privilege when doing local plugin development.
 
 ### Binary download fails during install

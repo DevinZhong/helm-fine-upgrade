@@ -31,6 +31,7 @@ plan before changing live cluster resources.
 
 ## Start Here
 
+- [Documentation Index](./docs/README.md): the full documentation map.
 - [Use Cases](./docs/use-cases.md): choose the right workflow for upgrade risk,
   runtime drift, resource adoption, and selector migration.
 - [Example Chart](./examples/simple-chart): a small chart for trying `plan`,
@@ -47,6 +48,7 @@ Recommended:
 ```bash
 helm plugin install https://github.com/DevinZhong/helm-fine-upgrade
 ```
+
 Helm 4 currently requires skipping plugin source verification for GitHub URL installs:
 
 ```bash
@@ -89,7 +91,7 @@ See [Binary Release](./docs/binary-release.md) and [Installation Troubleshooting
 
 The plugin is also listed on Artifact Hub for discovery:
 
-https://artifacthub.io/
+[Artifact Hub Repository](https://artifacthub.io/packages/search?repo=helm-fine-upgrade)
 
 ## Usage
 
@@ -211,7 +213,6 @@ helm fine-upgrade state-check my_release . \
     --fail-on runtime_missing,runtime_extra,runtime_drift
 ```
 
-
 ## Doctor Example
 
 Collect environment details before opening an issue or debugging an install:
@@ -220,6 +221,15 @@ Collect environment details before opening an issue or debugging an install:
 helm fine-upgrade doctor
 helm fine-upgrade doctor --output-format json
 ```
+
+## Documentation
+
+- [Documentation Index](./docs/README.md)
+- [Use Cases](./docs/use-cases.md)
+- [Installation And Troubleshooting](./docs/installation-troubleshooting.md)
+- [Binary Release](./docs/binary-release.md)
+- [Examples](./examples/README.md)
+- [Chinese Documentation](./docs/README.zh-CN.md)
 
 ## Safety Notes
 

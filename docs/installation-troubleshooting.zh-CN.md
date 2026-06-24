@@ -31,6 +31,7 @@ helm fine-upgrade doctor --output-format json
 
 输出里会包含插件版本、运行模式、安装路径，以及 `helm` / `kubectl` 是否在
 `PATH` 中。
+
 ## 前置要求
 
 - `helm` 已安装，并且在 `PATH` 中。
