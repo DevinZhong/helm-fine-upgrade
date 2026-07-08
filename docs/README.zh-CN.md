@@ -79,7 +79,7 @@ Remove-Item Env:\HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL
 也可以手动指定某个平台的 release 包安装：
 
 ```bash
-VERSION=v1.7.0
+VERSION=v1.7.1
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 

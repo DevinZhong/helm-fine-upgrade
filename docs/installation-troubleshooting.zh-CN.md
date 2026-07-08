@@ -149,14 +149,14 @@ kubectl version --client
 手动安装 release asset 可以绕过源码安装 hook：
 
 ```bash
-VERSION=v1.7.0
+VERSION=v1.7.1
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
 Windows：
 
 ```powershell
-$Version = "v1.7.0"
+$Version = "v1.7.1"
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/$Version/helm-fine-upgrade-$Version-windows-amd64.tar.gz"
 ```
 

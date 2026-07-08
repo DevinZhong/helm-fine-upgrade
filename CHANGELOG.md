@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.1
+
+### Fixed
+
+- Build the Linux release binary on Ubuntu 22.04 to avoid requiring newer glibc versions on target machines.
+
 ## 1.7.0
 
 ### Added

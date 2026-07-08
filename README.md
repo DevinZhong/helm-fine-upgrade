@@ -87,7 +87,7 @@ Remove-Item Env:\HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL
 Manual installation from a release asset is also supported:
 
 ```bash
-VERSION=v1.7.0
+VERSION=v1.7.1
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/${VERSION}/helm-fine-upgrade-${VERSION}-linux-amd64.tar.gz"
 ```
 
