@@ -34,7 +34,9 @@ helm fine-upgrade doctor --output-format json
 
 ## 前置要求
 
-- `helm` 已安装，并且在 `PATH` 中。
+- 已安装 Helm 3.15 或更新版本，或 Helm 4，并且在 `PATH` 中。Helm 3.14.2
+  及更老版本加载 `plugin.yaml` 时，可能会因为不认识 `platformHooks` 或
+  `args` 字段而失败。
 - `kubectl` 已安装，并且在 `PATH` 中；检查或修改集群资源的命令会用到它。
 - 已配置目标 Kubernetes 集群凭据。
 - 安装 hook 需要访问 GitHub Releases，除非显式使用源码模式。
@@ -84,6 +86,20 @@ plugin source does not support verification. Use --verify=false to skip verifica
 ```bash
 helm plugin install https://github.com/DevinZhong/helm-fine-upgrade --verify=false
 ```
+
+### WSL 软链接本地开发插件时报 permission denied
+
+错误：
+
+```text
+fork/exec .../scripts/run.sh: permission denied
+```
+
+如果 `$HELM_PLUGINS/helm-fine-upgrade` 是指向 `/mnt/c/...` 这类 Windows 挂载
+路径的软链接，就可能遇到这个问题。即使 Git 里记录了 `scripts/run.sh` 的可执行位，
+Windows 挂载路径也可能不会把 Unix executable bit 暴露给 WSL。日常使用建议从 GitHub
+URL 正式安装到 WSL 默认插件目录；本地开发时请使用较新的 Helm，本插件会通过 `sh` 调用
+shell 脚本，因此脚本文件本身不必有可执行位。
 
 ### Windows 本地路径安装提示 symlink 权限不足
 
@@ -143,3 +159,4 @@ Windows：
 $Version = "v1.7.0"
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/$Version/helm-fine-upgrade-$Version-windows-amd64.tar.gz"
 ```
+

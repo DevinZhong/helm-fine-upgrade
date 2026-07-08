@@ -37,7 +37,9 @@ The report includes plugin version, runtime mode, install paths, and whether
 
 ## Requirements
 
-- `helm` must be installed and available in `PATH`.
+- Helm 3.15 or newer, or Helm 4, must be installed and available in `PATH`.
+  Helm 3.14.2 and older may fail with `unknown field "platformHooks"` or
+  `unknown field "args"` while loading `plugin.yaml`.
 - `kubectl` must be installed and available in `PATH` for commands that inspect
   or mutate cluster resources.
 - Kubernetes credentials must be configured for the target cluster.
@@ -92,6 +94,22 @@ Use:
 ```bash
 helm plugin install https://github.com/DevinZhong/helm-fine-upgrade --verify=false
 ```
+
+### WSL symlinked local development plugin reports permission denied
+
+Error:
+
+```text
+fork/exec .../scripts/run.sh: permission denied
+```
+
+This can happen when `$HELM_PLUGINS/helm-fine-upgrade` is a symlink to a
+checkout on a Windows-mounted path such as `/mnt/c/...`. The Windows mount may
+not expose Unix executable bits even when Git tracks `scripts/run.sh` as
+executable. Prefer installing from the GitHub URL into the normal WSL plugin
+directory for day-to-day use. For local development, use a recent Helm version;
+the plugin invokes shell scripts through `sh` so the script file itself does not
+need to be executable.
 
 ### Windows local path install fails with symlink privilege
 
@@ -153,3 +171,4 @@ Windows:
 $Version = "v1.7.0"
 helm plugin install "https://github.com/DevinZhong/helm-fine-upgrade/releases/download/$Version/helm-fine-upgrade-$Version-windows-amd64.tar.gz"
 ```
+

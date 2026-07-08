@@ -43,6 +43,10 @@ plan before changing live cluster resources.
 
 ## Install
 
+Requires Helm 3.15 or newer, or Helm 4. Helm 3.14.2 and older may fail to
+load this plugin because they do not support the current Helm plugin metadata
+fields used by `plugin.yaml`.
+
 Recommended:
 
 ```bash
@@ -308,3 +312,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md).
 ## License
 
 [Apache License 2.0](./LICENSE)
+
