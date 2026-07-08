@@ -25,6 +25,7 @@ MUTATING_ACTIONS = {
     'update-ownership-metadata',
     'rolling-update-pod-labels',
 }
+CONFIRMATION_REQUIRED_EXIT_CODE = 2
 
 def print_default_config():
     """打印默认配置文件，类似 helm show values，可以使用重定向另行保存"""
@@ -142,13 +143,30 @@ def configure_runtime_options(args):
     if getattr(args, 'debug', False):
         os.environ['HELM_DEBUG'] = '1'
 
-def validate_safety_options(args):
-    if (getattr(args, 'action', None) in MUTATING_ACTIONS and
+def validate_safety_options(args, input_stream=None, output_stream=None):
+    if not (getattr(args, 'action', None) in MUTATING_ACTIONS and
             not getattr(args, 'dry_run', False) and
             not getattr(args, 'yes', False)):
-        raise SystemExit(
-            f"Command '{args.action}' may modify cluster resources or local files. "
-            "Run with --dry-run first, or pass --yes to confirm.")
+        return
+
+    input_stream = input_stream or sys.stdin
+    output_stream = output_stream or sys.stderr
+    message = (
+        f"Command '{args.action}' may modify cluster resources or local files.\n"
+        "Run with --dry-run first, pass --yes to confirm, or answer y to continue.")
+
+    if not input_stream.isatty():
+        print(message, file=output_stream)
+        raise SystemExit(CONFIRMATION_REQUIRED_EXIT_CODE)
+
+    print(message, file=output_stream)
+    print("Proceed? [y/N]: ", end='', file=output_stream, flush=True)
+    answer = input_stream.readline().strip().lower()
+    if answer in ('y', 'yes'):
+        return
+
+    print("Cancelled. No changes were made.", file=output_stream)
+    raise SystemExit(0)
 
 def dispatch(args):
     configure_runtime_options(args)

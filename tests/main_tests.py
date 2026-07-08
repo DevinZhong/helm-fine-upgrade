@@ -1,10 +1,16 @@
+import io
 import os
 import sys
 import unittest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
-from main import build_parser, configure_runtime_options, validate_safety_options
+from main import (
+    CONFIRMATION_REQUIRED_EXIT_CODE,
+    build_parser,
+    configure_runtime_options,
+    validate_safety_options,
+)
 
 
 class MainCliTests(unittest.TestCase):
@@ -87,15 +93,45 @@ class MainCliTests(unittest.TestCase):
         self.assertEqual(os.environ['DRY_RUN_FLAG'], '1')
         self.assertEqual(os.environ['HELM_DEBUG'], '1')
 
-    def test_mutating_command_requires_yes_without_dry_run(self):
+    def test_mutating_command_requires_yes_without_dry_run_in_noninteractive_mode(self):
         args = build_parser().parse_args([
             'apply', 'release', './chart',
         ])
+        input_stream = io.StringIO('')
+        output_stream = io.StringIO()
 
         with self.assertRaises(SystemExit) as context:
-            validate_safety_options(args)
+            validate_safety_options(args, input_stream=input_stream, output_stream=output_stream)
 
-        self.assertIn('pass --yes', str(context.exception))
+        self.assertEqual(context.exception.code, CONFIRMATION_REQUIRED_EXIT_CODE)
+        self.assertIn('pass --yes', output_stream.getvalue())
+
+    def test_mutating_command_cancels_without_error_when_interactive_answer_is_no(self):
+        args = build_parser().parse_args([
+            'apply', 'release', './chart',
+        ])
+        input_stream = io.StringIO('\n')
+        input_stream.isatty = lambda: True
+        output_stream = io.StringIO()
+
+        with self.assertRaises(SystemExit) as context:
+            validate_safety_options(args, input_stream=input_stream, output_stream=output_stream)
+
+        self.assertEqual(context.exception.code, 0)
+        self.assertIn('Proceed? [y/N]', output_stream.getvalue())
+        self.assertIn('Cancelled. No changes were made.', output_stream.getvalue())
+
+    def test_mutating_command_allows_interactive_yes(self):
+        args = build_parser().parse_args([
+            'apply', 'release', './chart',
+        ])
+        input_stream = io.StringIO('y\n')
+        input_stream.isatty = lambda: True
+        output_stream = io.StringIO()
+
+        validate_safety_options(args, input_stream=input_stream, output_stream=output_stream)
+
+        self.assertIn('Proceed? [y/N]', output_stream.getvalue())
 
     def test_mutating_command_allows_dry_run_without_yes(self):
         args = build_parser().parse_args([
