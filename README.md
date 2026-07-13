@@ -352,6 +352,10 @@ python -m py_compile src/main.py src/services/helm_service.py src/services/metad
 GitHub Actions runs the same unit-test and compile checks on pull requests and
 pushes to `main`.
 
+The separate integration workflow creates a disposable kind cluster to validate
+the plugin against Helm and `kubectl`. See [Integration
+Testing](./docs/integration-testing.md) for covered scenarios and local usage.
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).

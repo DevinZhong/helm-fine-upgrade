@@ -12,6 +12,8 @@ This directory contains the extended documentation for `helm-fine-upgrade`.
   to install them directly from GitHub Releases.
 - [Release Checklist](./release-checklist.md): steps to verify before publishing
   a release tag.
+- [Integration Testing](./integration-testing.md): disposable kind-cluster
+  scenarios run by GitHub Actions and local execution guidance.
 
 ## Additional References
 

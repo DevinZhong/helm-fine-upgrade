@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-adoptable
+  namespace: {{ .Release.Namespace }}
+data:
+  managed-by: helm-fine-upgrade-integration-test

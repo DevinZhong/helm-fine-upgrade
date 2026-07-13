@@ -1,7 +1,7 @@
 # Examples
 
-This directory contains a small Helm chart and a GitHub Actions workflow snippet
-for trying `helm-fine-upgrade` commands.
+This directory contains Helm chart fixtures and a GitHub Actions workflow
+snippet for trying `helm-fine-upgrade` commands.
 
 ## Example Chart
 
@@ -48,3 +48,9 @@ helm fine-upgrade state-check demo ./examples/simple-chart \
 `ci/github-actions.yml` shows where to install the plugin and run report gates in
 a GitHub Actions workflow. Replace `my_release`, `my_namespace`, and chart paths
 with your real release settings before using it in a repository.
+
+## Adoption Fixture
+
+`adoption-chart/` renders one ConfigMap. The integration test creates that
+ConfigMap before Helm owns it, then verifies that `adopt-plan` reports it as
+adoptable. It is intended for disposable test clusters only.

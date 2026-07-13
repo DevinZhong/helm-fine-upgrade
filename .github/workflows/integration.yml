@@ -1,0 +1,40 @@
+name: Integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kind:
+    name: Helm plugin integration test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Create disposable kind cluster
+        uses: helm/kind-action@v1.12.0
+        with:
+          cluster_name: helm-fine-upgrade-ci
+
+      - name: Install plugin from this checkout
+        env:
+          HELM_FINE_UPGRADE_SKIP_BINARY_INSTALL: '1'
+        run: helm plugin install .
+
+      - name: Run integration scenarios
+        run: bash tests/integration/kind.sh
