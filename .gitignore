@@ -161,3 +161,6 @@ cython_debug/
 
 # Local developer tools
 .tools/
+
+# Disposable kind integration-test reports
+integration-reports/

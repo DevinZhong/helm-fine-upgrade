@@ -33,6 +33,12 @@ The test script removes its temporary namespace even when a scenario fails.
 Run it only against a disposable kind cluster; it intentionally creates,
 patches, and deletes test resources.
 
+When the GitHub Actions workflow fails, it uploads an
+`integration-diagnostics` artifact. It contains the plugin reports and, for a
+clean-baseline drift failure, the rendered manifests and runtime resource YAML.
+These files are generated only from the disposable kind cluster and are useful
+for comparing Kubernetes server-defaulted fields with chart output.
+
 ## Company Environment Validation
 
 Use a separate non-production cluster and dedicated test namespace for manual
