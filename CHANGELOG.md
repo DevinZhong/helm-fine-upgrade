@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Avoid reporting Kubernetes API-server default values for Service type and
+  empty container resources as runtime drift when the chart omits them.
+
 ## 1.7.1
 
 ### Fixed

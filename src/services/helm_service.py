@@ -91,9 +91,50 @@ def normalize_manifest_for_compare(manifest: dict, ignore_fields_config: dict) -
     remove_ignore_fields(normalized_manifest, ignore_fields_config)
     return normalized_manifest
 
+def get_pod_spec(manifest: dict):
+    """Return a Pod spec for a Pod or a workload template, if present."""
+    spec = manifest.get('spec', {})
+    if manifest.get('kind') == 'Pod':
+        return spec
+    return spec.get('template', {}).get('spec', {})
+
+def remove_implicit_runtime_defaults(rendered_manifest: dict,
+                                     runtime_manifest: dict) -> None:
+    """Remove API-server defaults only when the rendered manifest omitted them.
+
+    These defaults are not user intent and otherwise make a fresh Helm release
+    look drifted. Values explicitly rendered by the chart remain comparable.
+    """
+    if rendered_manifest.get('kind') != runtime_manifest.get('kind'):
+        return
+
+    rendered_spec = rendered_manifest.get('spec', {})
+    runtime_spec = runtime_manifest.get('spec', {})
+    if (rendered_manifest.get('kind') == 'Service' and
+            'type' not in rendered_spec and
+            runtime_spec.get('type') == 'ClusterIP'):
+        runtime_spec.pop('type', None)
+
+    rendered_pod_spec = get_pod_spec(rendered_manifest)
+    runtime_pod_spec = get_pod_spec(runtime_manifest)
+    for container_group in ('containers', 'initContainers'):
+        rendered_containers = {
+            container.get('name'): container
+            for container in rendered_pod_spec.get(container_group, [])
+            if container.get('name')
+        }
+        for runtime_container in runtime_pod_spec.get(container_group, []):
+            rendered_container = rendered_containers.get(
+                runtime_container.get('name'))
+            if (rendered_container is not None and
+                    'resources' not in rendered_container and
+                    runtime_container.get('resources') == {}):
+                runtime_container.pop('resources', None)
+
 def manifests_are_equal(left: dict, right: dict, ignore_fields_config: dict) -> bool:
     normalized_left = normalize_manifest_for_compare(left, ignore_fields_config)
     normalized_right = normalize_manifest_for_compare(right, ignore_fields_config)
+    remove_implicit_runtime_defaults(normalized_left, normalized_right)
     return yaml.dump(normalized_left, allow_unicode=True, sort_keys=True) == \
         yaml.dump(normalized_right, allow_unicode=True, sort_keys=True)
 

@@ -164,3 +164,5 @@ cython_debug/
 
 # Disposable kind integration-test reports
 integration-reports/
+integration-diagnostics/
+logs_*/

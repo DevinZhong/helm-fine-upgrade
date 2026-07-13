@@ -9,6 +9,7 @@ from utils.dict_utils import parse_selector, remove_ignore_fields, set_value
 from utils.manifest_utils import find_and_merge_related_rendered_manifests_of_deployments
 from services.helm_service import (build_state_check, build_upgrade_plan,
                                    detect_immutable_field_changes,
+                                   manifests_are_equal,
                                    plan_upgrade)
 
 
@@ -118,6 +119,66 @@ class HelmServiceSupportTests(unittest.TestCase):
         self.assertEqual(detect_immutable_field_changes(rendered, cluster), [
             'spec.selector'
         ])
+
+    def test_manifest_comparison_ignores_implicit_service_and_container_defaults(self):
+        rendered_service = {
+            'kind': 'Service',
+            'metadata': {'name': 'demo'},
+            'spec': {'ports': [{'port': 80}]},
+        }
+        runtime_service = {
+            'kind': 'Service',
+            'metadata': {'name': 'demo'},
+            'spec': {'ports': [{'port': 80}], 'type': 'ClusterIP'},
+        }
+        rendered_deployment = {
+            'kind': 'Deployment',
+            'metadata': {'name': 'demo'},
+            'spec': {'template': {'spec': {'containers': [{'name': 'web'}]}}},
+        }
+        runtime_deployment = {
+            'kind': 'Deployment',
+            'metadata': {'name': 'demo'},
+            'spec': {'template': {'spec': {'containers': [
+                {'name': 'web', 'resources': {}},
+            ]}}},
+        }
+
+        self.assertTrue(manifests_are_equal(
+            rendered_service, runtime_service, {}))
+        self.assertTrue(manifests_are_equal(
+            rendered_deployment, runtime_deployment, {}))
+
+    def test_manifest_comparison_keeps_explicit_service_type_and_resources(self):
+        rendered_service = {
+            'kind': 'Service',
+            'metadata': {'name': 'demo'},
+            'spec': {'type': 'LoadBalancer'},
+        }
+        runtime_service = {
+            'kind': 'Service',
+            'metadata': {'name': 'demo'},
+            'spec': {'type': 'ClusterIP'},
+        }
+        rendered_deployment = {
+            'kind': 'Deployment',
+            'metadata': {'name': 'demo'},
+            'spec': {'template': {'spec': {'containers': [
+                {'name': 'web', 'resources': {'requests': {'cpu': '100m'}}},
+            ]}}},
+        }
+        runtime_deployment = {
+            'kind': 'Deployment',
+            'metadata': {'name': 'demo'},
+            'spec': {'template': {'spec': {'containers': [
+                {'name': 'web', 'resources': {}},
+            ]}}},
+        }
+
+        self.assertFalse(manifests_are_equal(
+            rendered_service, runtime_service, {}))
+        self.assertFalse(manifests_are_equal(
+            rendered_deployment, runtime_deployment, {}))
 
     def test_build_upgrade_plan_classifies_common_resource_states(self):
         rendered_manifests = [
