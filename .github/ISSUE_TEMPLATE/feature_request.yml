@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a focused improvement to an existing helm-fine-upgrade workflow.
+title: "feature: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the Kubernetes or Helm workflow problem, not only a proposed API.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Explain the command, output, or documentation change you expect.
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety considerations
+      description: Describe possible cluster mutations, ownership changes, or dry-run requirements.
+    validations:
+      required: true

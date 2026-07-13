@@ -1,5 +1,9 @@
 # helm-fine-upgrade
 
+[![CI](https://github.com/DevinZhong/helm-fine-upgrade/actions/workflows/ci.yml/badge.svg)](https://github.com/DevinZhong/helm-fine-upgrade/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/DevinZhong/helm-fine-upgrade)](https://github.com/DevinZhong/helm-fine-upgrade/releases)
+[![License](https://img.shields.io/github/license/DevinZhong/helm-fine-upgrade)](./LICENSE)
+
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/helm-fine-upgrade)](https://artifacthub.io/packages/search?repo=helm-fine-upgrade)
 
 [中文文档](./docs/README.zh-CN.md)
@@ -12,7 +16,35 @@ resources, and values files may have drifted over time. It helps you inspect
 upgrade impact, compare Helm release storage with runtime state, adopt existing
 resources into a release, and apply carefully selected rendered manifests.
 
-## When To Use It
+## Project Overview
+
+Use this plugin before a risky Helm change when a template render or a normal
+upgrade alone cannot answer whether the chart, Helm release record, and live
+cluster resources are still aligned. It is a companion to Helm: it does not
+replace Helm, GitOps controllers, or `helm diff`.
+
+## Why This Project Exists
+
+Helm renders charts and stores release state, while real clusters can also
+contain out-of-band `kubectl` changes, resources created before a release, and
+objects that a changed chart no longer renders. Reconciling those inputs
+manually is error-prone during an upgrade.
+
+`helm-fine-upgrade` combines rendered manifests, Helm release storage, and
+selected live-resource queries into explicit plans and reports. Mutating
+commands require `--yes` unless they are run with `--dry-run`.
+
+## Native Helm Workflow Compared
+
+| Need | Native Helm workflow | `helm-fine-upgrade` |
+| --- | --- | --- |
+| Render a chart | `helm template` | Uses rendered manifests as an input |
+| Perform an upgrade | `helm upgrade` | Does not replace `helm upgrade` |
+| Inspect chart, release, and runtime alignment | Combine Helm and `kubectl` output manually | `state-check` report |
+| Review adoption ownership | Inspect resource metadata manually | `adopt-plan` report and command previews |
+| Categorize upgrade impact | Review chart and cluster state separately | `plan` report with create, update, adopt, orphan, and immutable-risk categories |
+
+## Features And Suitable Scenarios
 
 Use this plugin when you need to:
 
@@ -177,6 +209,21 @@ Mutating commands:
 5. Use mutating commands only after reviewing the plan and, where supported,
    `--dry-run`.
 
+## Design
+
+The plugin coordinates existing command-line interfaces rather than replacing
+them:
+
+```text
+chart + values --helm template--> rendered manifests
+Helm release storage -------------------------> state / plan reports
+live Kubernetes resources --kubectl-----------> state / plan reports
+```
+
+Read-only commands produce reports from these inputs. `apply` uses `kubectl
+apply` and does not update Helm release storage; use a normal `helm upgrade`
+afterward when release state must match runtime state.
+
 ## Common Flags
 
 Most commands support:
@@ -308,6 +355,13 @@ pushes to `main`.
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## Roadmap
+
+Current maintenance priorities are keeping the plugin installation flow
+compatible with supported Helm versions, expanding regression coverage for
+reported edge cases, and improving command documentation and examples. New
+mutating behavior should remain opt-in and safety-reviewed.
 
 ## License
 

@@ -1,0 +1,36 @@
+name: Bug report
+description: Report reproducible behavior in helm-fine-upgrade.
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include kubeconfig files, tokens, credentials, or private cluster data.
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      description: Include `helm fine-upgrade doctor` output when possible.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and sanitized output
+      description: Include the exact command, expected behavior, and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Helm version, kubectl version, OS, and Kubernetes version if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
