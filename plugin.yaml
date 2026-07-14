@@ -1,6 +1,6 @@
 name: fine-upgrade
 version: '1.7.1'
-usage: "A way for more controllable upgrading of Helm charts."
+usage: "Controlled Helm upgrades with release-state inspection, drift detection, and resource adoption."
 description: |
   A Helm plugin for controlled upgrades, release-state inspection, and adoption
   of existing Kubernetes resources.
