@@ -1,9 +1,9 @@
 # helm-fine-upgrade
 
 [![CI](https://github.com/DevinZhong/helm-fine-upgrade/actions/workflows/ci.yml/badge.svg)](https://github.com/DevinZhong/helm-fine-upgrade/actions/workflows/ci.yml)
+[![Integration Test](https://github.com/DevinZhong/helm-fine-upgrade/actions/workflows/integration.yml/badge.svg)](https://github.com/DevinZhong/helm-fine-upgrade/actions/workflows/integration.yml)
 [![Latest release](https://img.shields.io/github/v/release/DevinZhong/helm-fine-upgrade)](https://github.com/DevinZhong/helm-fine-upgrade/releases)
 [![License](https://img.shields.io/github/license/DevinZhong/helm-fine-upgrade)](./LICENSE)
-
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/helm-fine-upgrade)](https://artifacthub.io/packages/search?repo=helm-fine-upgrade)
 
 [中文文档](./docs/README.zh-CN.md)
