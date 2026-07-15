@@ -94,7 +94,7 @@ jobs:
           mkdir -p dist-release
           PACKAGE_DIR="${PACKAGE_DIR}" ARCHIVE_EXT="${{ matrix.archive-ext }}" python -c "import os, shutil; fmt = 'zip' if os.environ['ARCHIVE_EXT'] == 'zip' else 'gztar'; shutil.make_archive(os.path.join('dist-release', os.environ['PACKAGE_DIR']), fmt, root_dir='.', base_dir=os.environ['PACKAGE_DIR'])"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: helm-fine-upgrade-${{ github.ref_name }}-${{ matrix.asset-name }}
           path: dist-release/*
